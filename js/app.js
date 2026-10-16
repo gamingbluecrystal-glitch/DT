@@ -259,23 +259,54 @@ function updateMap() {
 
   AppState.layersGroup.clearLayers();
 
-  // 1. Draw Routes Polylines
+  // 1. Draw Routes Polylines (Google Maps Road Snapping)
   AppState.routes.forEach(route => {
     if (!route.isActive || !route.stops) return;
-    const latlngs = [];
-    route.stops.forEach(rs => {
-      const stop = AppState.stopsMap.get(rs.stopId);
-      if (stop && typeof stop.lat === 'number' && typeof stop.lng === 'number') {
-        latlngs.push([stop.lat, stop.lng]);
-      }
-    });
 
-    if (latlngs.length > 1) {
-      L.polyline(latlngs, {
-        color: route.color || '#b91c1c',
-        weight: 4,
-        opacity: 0.85
+    const geom = (route.roadGeometry && Array.isArray(route.roadGeometry) && route.roadGeometry.length > 0)
+      ? route.roadGeometry
+      : null;
+
+    if (geom && geom.length > 1) {
+      // Outer road casing (Google Maps transit style)
+      L.polyline(geom, {
+        color: '#ffffff',
+        weight: 8,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
       }).addTo(AppState.layersGroup);
+
+      // Inner vibrant transit line
+      L.polyline(geom, {
+        color: route.color || '#dc2626',
+        weight: 5,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(AppState.layersGroup);
+    } else {
+      const latlngs = [];
+      route.stops.forEach(rs => {
+        const stop = AppState.stopsMap.get(rs.stopId);
+        if (stop && typeof stop.lat === 'number' && typeof stop.lng === 'number') {
+          latlngs.push([stop.lat, stop.lng]);
+        }
+      });
+
+      if (latlngs.length > 1) {
+        L.polyline(latlngs, {
+          color: '#ffffff',
+          weight: 7,
+          opacity: 0.9
+        }).addTo(AppState.layersGroup);
+
+        L.polyline(latlngs, {
+          color: route.color || '#b91c1c',
+          weight: 4,
+          opacity: 0.9
+        }).addTo(AppState.layersGroup);
+      }
     }
   });
 
@@ -356,7 +387,7 @@ function getActiveBusesOnRoad() {
     const bus = AppState.busesMap.get(trip.busId);
     if (!route || !bus || bus.status !== 'active') continue;
 
-    const loc = EtaEngine.calculateEstimatedLocation(trip, AppState.stopsMap, AppState.simulatedMinutes);
+    const loc = EtaEngine.calculateEstimatedLocation(trip, AppState.stopsMap, AppState.simulatedMinutes, AppState.routesMap);
     if (loc && loc.isTripActive && typeof loc.lat === 'number' && loc.lat !== null) {
       list.push({ bus, route, trip, location: loc });
     }

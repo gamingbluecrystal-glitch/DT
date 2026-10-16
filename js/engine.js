@@ -36,7 +36,7 @@ const EtaEngine = {
   /**
    * Calculates linear interpolation between two stops based on elapsed timetable minutes.
    */
-  calculateEstimatedLocation(trip, stopsMap, currentMinutes) {
+  calculateEstimatedLocation(trip, stopsMap, currentMinutes, routesMap) {
     const halts = trip.halts;
 
     if (!halts || halts.length === 0) {
@@ -111,17 +111,24 @@ const EtaEngine = {
         const nextHalt = halts[i + 1];
         const nextStop = nextHalt ? stopsMap.get(nextHalt.stopId) || null : null;
 
+        const layoverMins = Math.max(1, depMin - arrMin);
+        const isLayover = (depMin - arrMin >= 5) || trip.layoverDuration > 0 || (trip.layoverStop && halt.stopId === trip.layoverStop);
+        const stopName = stop?.name || 'Terminal';
+        const layoverDesc = isLayover 
+          ? `At ${stopName} (${layoverMins}-Min Turnaround Layover & Passenger Boarding)`
+          : `Halted at ${stopName} (Boarding)`;
+
         return {
           lat: stop && typeof stop.lat === 'number' ? stop.lat : null,
           lng: stop && typeof stop.lng === 'number' ? stop.lng : null,
           previousStop: stop,
           nextStop: nextStop,
-          currentSegmentDescription: `Halted at ${stop?.name || 'Stop'} (Boarding)`,
+          currentSegmentDescription: layoverDesc,
           progressPercent: (i / (halts.length - 1)) * 100,
           isRestingAtStop: true,
           restingStop: stop,
           isTripActive: true,
-          statusText: `At ${stop?.name || 'Stop'}`
+          statusText: isLayover ? `${layoverMins}-Min Layover at ${stopName} (${Math.max(0, depMin - currentMinutes)}m left)` : `At ${stopName}`
         };
       }
     }
@@ -150,7 +157,38 @@ const EtaEngine = {
         let interpolatedLat = latFrom;
         let interpolatedLng = lngFrom;
 
-        if (latFrom !== null && latTo !== null && lngFrom !== null && lngTo !== null) {
+        // Google Maps-style road snapping if road geometry available from route in database
+        let snapped = false;
+        let geom = null;
+        if (routesMap && routesMap.has(trip.routeId)) {
+          const r = routesMap.get(trip.routeId);
+          if (r && Array.isArray(r.roadGeometry) && r.roadGeometry.length > 0) {
+            geom = r.roadGeometry;
+          }
+        } else if (trip.roadGeometry && Array.isArray(trip.roadGeometry) && trip.roadGeometry.length > 0) {
+          geom = trip.roadGeometry;
+        }
+
+        if (geom && geom.length > 0 && latFrom !== null && latTo !== null && lngFrom !== null && lngTo !== null) {
+          let bestFrom = 0, minDistF = Infinity;
+          let bestTo = geom.length - 1, minDistT = Infinity;
+          for (let p = 0; p < geom.length; p++) {
+            const pt = geom[p];
+            const pLat = Array.isArray(pt) ? pt[0] : (typeof pt.lat === 'number' ? pt.lat : pt[0]);
+            const pLng = Array.isArray(pt) ? pt[1] : (typeof pt.lng === 'number' ? pt.lng : pt[1]);
+            const dF = Math.hypot(pLat - latFrom, pLng - lngFrom);
+            if (dF < minDistF) { minDistF = dF; bestFrom = p; }
+            const dT = Math.hypot(pLat - latTo, pLng - lngTo);
+            if (dT < minDistT) { minDistT = dT; bestTo = p; }
+          }
+          const ptIdx = Math.max(0, Math.min(geom.length - 1, Math.round(bestFrom + t * (bestTo - bestFrom))));
+          const selectedPt = geom[ptIdx];
+          interpolatedLat = Array.isArray(selectedPt) ? selectedPt[0] : selectedPt.lat;
+          interpolatedLng = Array.isArray(selectedPt) ? selectedPt[1] : selectedPt.lng;
+          snapped = true;
+        }
+
+        if (!snapped && latFrom !== null && latTo !== null && lngFrom !== null && lngTo !== null) {
           interpolatedLat = latFrom + t * (latTo - latFrom);
           interpolatedLng = lngFrom + t * (lngTo - lngFrom);
         }
@@ -209,8 +247,8 @@ const EtaEngine = {
     const destHalt = halts[halts.length - 1];
     const originStop = stopsMap.get(originHalt.stopId) || targetStop;
     const destinationStop = stopsMap.get(destHalt.stopId) || targetStop;
-
-    const estimatedLocation = this.calculateEstimatedLocation(trip, stopsMap, currentMinutes);
+    const routesMap = route ? new Map([[route.id, route]]) : null;
+    const estimatedLocation = this.calculateEstimatedLocation(trip, stopsMap, currentMinutes, routesMap);
 
     let lastPassedIndex = -1;
     for (let i = 0; i < halts.length; i++) {

@@ -1,0 +1,58 @@
+[
+  {
+    "from": "CBS, Nashik",
+    "to": "Nimani Bus Stand",
+    "distanceKm": 2.69,
+    "driveDurationMin": 2.6,
+    "busDurationMin": 5
+  },
+  {
+    "from": "Nimani Bus Stand",
+    "to": "Adgaon Naka",
+    "distanceKm": 1.26,
+    "driveDurationMin": 2.2,
+    "busDurationMin": 4
+  },
+  {
+    "from": "Adgaon Naka",
+    "to": "Amrutdham",
+    "distanceKm": 2.18,
+    "driveDurationMin": 2,
+    "busDurationMin": 4
+  },
+  {
+    "from": "Amrutdham",
+    "to": "Bali Mandir",
+    "distanceKm": 0.71,
+    "driveDurationMin": 0.7,
+    "busDurationMin": 2
+  },
+  {
+    "from": "Bali Mandir",
+    "to": "Jatra Hotel",
+    "distanceKm": 1.28,
+    "driveDurationMin": 1.2,
+    "busDurationMin": 3
+  },
+  {
+    "from": "Jatra Hotel",
+    "to": "Juna Jakat Naka",
+    "distanceKm": 9.86,
+    "driveDurationMin": 7.2,
+    "busDurationMin": 11
+  },
+  {
+    "from": "Juna Jakat Naka",
+    "to": "Ojhar Bus Stop",
+    "distanceKm": 9.62,
+    "driveDurationMin": 10.5,
+    "busDurationMin": 15
+  },
+  {
+    "from": "Ojhar Bus Stop",
+    "to": "Pimpalgaon Baswant Bus Stop",
+    "distanceKm": 11.73,
+    "driveDurationMin": 9.8,
+    "busDurationMin": 14
+  }
+]

@@ -22,26 +22,6 @@ const StorageService = {
       'smartbus_settings_v3'
     ];
     legacyKeys.forEach(k => localStorage.removeItem(k));
-
-    // Only seed on very first run if NEVER initialized before
-    if (!localStorage.getItem(StorageKeys.INITIALIZED)) {
-      if (typeof INITIAL_STOPS !== 'undefined' && INITIAL_STOPS.length > 0) {
-        this.saveStops(INITIAL_STOPS, false);
-      }
-      if (typeof INITIAL_BUSES !== 'undefined' && INITIAL_BUSES.length > 0) {
-        this.saveBuses(INITIAL_BUSES, false);
-      }
-      if (typeof INITIAL_ROUTES !== 'undefined' && INITIAL_ROUTES.length > 0) {
-        this.saveRoutes(INITIAL_ROUTES, false);
-      }
-      if (typeof generateInitialTrips === 'function') {
-        const trips = generateInitialTrips();
-        if (trips.length > 0) {
-          this.saveTrips(trips, false);
-        }
-      }
-      localStorage.setItem(StorageKeys.INITIALIZED, 'true');
-    }
   },
 
   getStops() {
@@ -190,11 +170,19 @@ const StorageService = {
 
   applyCloudCollectionUpdate(colName, items) {
     try {
+      if (!Array.isArray(items)) {
+        return;
+      }
       if (colName === 'stops') {
         localStorage.setItem(StorageKeys.STOPS, JSON.stringify(items));
       } else if (colName === 'buses') {
         localStorage.setItem(StorageKeys.BUSES, JSON.stringify(items));
       } else if (colName === 'routes') {
+        items.forEach(r => {
+          if (Array.isArray(r.roadGeometry)) {
+            r.roadGeometry = r.roadGeometry.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
+          }
+        });
         localStorage.setItem(StorageKeys.ROUTES, JSON.stringify(items));
       } else if (colName === 'trips') {
         localStorage.setItem(StorageKeys.TRIPS, JSON.stringify(items));

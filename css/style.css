@@ -1036,3 +1036,105 @@ body {
 .footer strong {
   color: var(--primary);
 }
+
+/* Google Maps-style Transit Tracking & Admin Map Styles */
+.tracker-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+@media (max-width: 960px) {
+  .tracker-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tracker-map-box {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+#admin-tracker-map {
+  width: 100%;
+  height: 520px;
+  min-height: 440px;
+  border-radius: var(--radius-sm);
+  background: #e2e8f0;
+}
+
+.layover-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.transit-stop-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 2px solid #dc2626;
+  color: #dc2626;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.transit-stop-pin:hover {
+  transform: scale(1.25);
+  z-index: 9999 !important;
+}
+
+.transit-stop-pin.terminal {
+  background-color: #dc2626;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.6);
+}
+
+.eta-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.eta-pill.soon {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.eta-pill.upcoming {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.eta-pill.layover {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+

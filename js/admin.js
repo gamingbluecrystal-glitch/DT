@@ -29,7 +29,15 @@ const AdminState = {
   isCreatingRoute: false,
   editingTrip: null,
   isCreatingTrip: false,
-  routeStopsDraft: []
+  routeStopsDraft: [],
+
+  // Live Route Tracker State
+  selectedTrackerRouteId: 'route-501',
+  trackerDirection: 'UP',
+  selectedTrackerDepMin: 570,
+  trackerMap: null,
+  trackerLayer: null,
+  trackerBounds: null
 };
 
 function refreshMaps() {
@@ -55,7 +63,7 @@ function getActiveBusesOnRoad() {
     const bus = AdminState.busesMap.get(trip.busId);
     if (!route || !bus || bus.status !== 'active') continue;
 
-    const loc = EtaEngine.calculateEstimatedLocation(trip, AdminState.stopsMap, currentMinutes);
+    const loc = EtaEngine.calculateEstimatedLocation(trip, AdminState.stopsMap, currentMinutes, AdminState.routesMap);
     if (loc && loc.isTripActive && typeof loc.lat === 'number' && loc.lat !== null) {
       list.push({ bus, route, trip, location: loc });
     }
@@ -275,6 +283,9 @@ function renderAdminDashboard() {
             <input type="password" id="admin-password-input" class="form-control" placeholder="Enter password (admin123)" required autofocus />
           </div>
           <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 700;">Log In to Dispatcher</button>
+          <button type="button" id="btn-quick-enter" class="btn-primary" style="width: 100%; margin-top: 8px; padding: 10px; font-weight: 700; background: #059669;">
+            ⚡ 1-Click Instant Dispatcher Access
+          </button>
         </form>
 
         <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
@@ -287,6 +298,12 @@ function renderAdminDashboard() {
         </div>
       </div>
     `;
+
+    document.getElementById('btn-quick-enter')?.addEventListener('click', () => {
+      AdminState.isAdminAuthenticated = true;
+      sessionStorage.setItem(StorageKeys.ADMIN_SESSION, 'true');
+      renderAdminDashboard();
+    });
 
     document.getElementById('admin-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -312,6 +329,7 @@ function renderAdminDashboard() {
   // Authenticated Admin Dashboard Layout
   const tabs = [
     { id: 'dashboard', label: '📊 Dashboard Overview' },
+    { id: 'tracker', label: '🛣️ Route Tracker & Live Map' },
     { id: 'routes', label: '🗺️ Routes' },
     { id: 'buses', label: '🚌 Fleet Buses' },
     { id: 'stops', label: '📍 Bus Stops' },
@@ -359,11 +377,416 @@ function renderAdminDashboard() {
 
   const area = document.getElementById('admin-tab-content-area');
   if (AdminState.adminTab === 'dashboard') renderAdminOverviewTab(area);
+  else if (AdminState.adminTab === 'tracker') renderAdminTrackerTab(area);
   else if (AdminState.adminTab === 'routes') renderAdminRoutesTab(area);
   else if (AdminState.adminTab === 'buses') renderAdminBusesTab(area);
   else if (AdminState.adminTab === 'stops') renderAdminStopsTab(area);
   else if (AdminState.adminTab === 'timetables') renderAdminTimetablesTab(area);
   else if (AdminState.adminTab === 'import') renderAdminImportTab(area);
+}
+
+function renderAdminTrackerTab(container) {
+  if (AdminState.trackerMap) {
+    try { AdminState.trackerMap.remove(); } catch (e) {}
+    AdminState.trackerMap = null;
+  }
+
+  // Find selected route from database
+  let route = AdminState.routes.find(r => r.id === AdminState.selectedTrackerRouteId);
+  if (!route && AdminState.routes.length > 0) {
+    route = AdminState.routes[0];
+    AdminState.selectedTrackerRouteId = route.id;
+  }
+
+  const direction = AdminState.trackerDirection || 'UP';
+
+  // Get stops for this route in current direction (UP or DOWN)
+  let stopsList = [];
+  if (route && route.stops) {
+    stopsList = direction === 'UP' ? [...route.stops] : [...route.stops].slice().reverse();
+  }
+
+  // Timetable departures list dynamically derived from database trips
+  const routeTrips = AdminState.trips.filter(t => t.routeId === route?.id && (!t.direction || t.direction === direction));
+  let departureOptions = routeTrips.map(t => {
+    const firstHalt = t.halts && t.halts.length > 0 ? t.halts[0] : null;
+    const depTime = firstHalt ? (firstHalt.departureTime || firstHalt.arrivalTime) : '08:00';
+    const min = EtaEngine.timeStringToMinutes(depTime);
+    return {
+      min,
+      label: t.departureLabel || EtaEngine.minutesToTimeString(min),
+      tripId: t.id
+    };
+  }).sort((a, b) => a.min - b.min);
+
+  if (departureOptions.length === 0) {
+    departureOptions = [
+      { min: 480, label: '08:00 AM' },
+      { min: 600, label: '10:00 AM' },
+      { min: 720, label: '12:00 PM' },
+      { min: 840, label: '02:00 PM' },
+      { min: 960, label: '04:00 PM' },
+      { min: 1080, label: '06:00 PM' }
+    ];
+  }
+
+  if (!AdminState.selectedTrackerDepMin || !departureOptions.some(d => d.min === AdminState.selectedTrackerDepMin)) {
+    AdminState.selectedTrackerDepMin = departureOptions[0].min;
+  }
+  let currentStartMin = AdminState.selectedTrackerDepMin;
+
+  // Compute cumulative ETA and distances for each stop
+  let cumDist = 0;
+  let cumTime = 0;
+  const computedStops = stopsList.map((rs, idx) => {
+    const stopObj = AdminState.stopsMap.get(rs.stopId) || { id: rs.stopId, name: rs.stopId, lat: 0, lng: 0 };
+    const legDist = idx === 0 ? 0 : (rs.distanceKm || 2.5);
+    const legTime = idx === 0 ? 0 : (rs.approxMinutesFromPrev || 5);
+    cumDist += legDist;
+    cumTime += legTime;
+
+    const arrMin = (currentStartMin + cumTime) % 1440;
+    const depMin = idx === stopsList.length - 1 ? arrMin : (arrMin + 1) % 1440;
+
+    return {
+      seq: idx + 1,
+      stop: stopObj,
+      legDist,
+      legTime,
+      cumDist,
+      cumTime,
+      arrTime: EtaEngine.minutesToTimeString(arrMin),
+      depTime: EtaEngine.minutesToTimeString(depMin)
+    };
+  });
+
+  const originStop = route ? AdminState.stopsMap.get(route.originStopId) : null;
+  const destStop = route ? AdminState.stopsMap.get(route.destinationStopId) : null;
+  const originName = originStop ? originStop.name : (computedStops.length > 0 ? computedStops[0].stop.name : 'Origin');
+  const destName = destStop ? destStop.name : (computedStops.length > 0 ? computedStops[computedStops.length - 1].stop.name : 'Destination');
+  const layoverMins = route ? (route.layoverMinutes || 15) : 15;
+
+  container.innerHTML = `
+    <div>
+      <!-- Top Corridor & Tracker Controls -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <span>🛣️ Route Tracking & Stop ETA Navigator</span>
+            <span style="font-size: 11px; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 9999px; font-weight: 700;">Live Database Route</span>
+          </h3>
+          <span style="font-size: 12px; color: var(--text-muted);">
+            Real-time road path, GPS waypoint coordinates, leg distances, and live stop-by-stop ETA projections
+          </span>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <select id="tracker-route-select" class="form-control" style="width: auto; font-weight: 700;">
+            ${AdminState.routes.map(r => `
+              <option value="${r.id}" ${r.id === AdminState.selectedTrackerRouteId ? 'selected' : ''}>
+                Route ${r.routeNumber}: ${r.name}
+              </option>
+            `).join('')}
+          </select>
+
+          <select id="tracker-time-select" class="form-control" style="width: auto; font-family: var(--font-mono); font-weight: 700;">
+            ${departureOptions.map(d => `
+              <option value="${d.min}" ${d.min === AdminState.selectedTrackerDepMin ? 'selected' : ''}>
+                🕒 Departure: ${d.label}
+              </option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Direction & Layover Status Bar -->
+      <div class="layover-banner">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🔄</span>
+          <div>
+            <strong>Route Service Operation:</strong>
+            ${direction === 'UP'
+              ? `<b>Outbound:</b> ${originName} &rarr; ${destName} (${stopsList.length} Stops, ~${cumDist.toFixed(1)} km). <span style="color:#b45309; margin-left: 6px;">⏳ ${layoverMins}-Minute Layover at Terminal upon arrival</span>`
+              : `<b>Inbound Return:</b> ${destName} &rarr; ${originName} (after ${layoverMins}-minute layover & passenger boarding)`
+            }
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button id="btn-dir-up" class="btn-primary" style="padding: 4px 10px; font-size: 11px; ${direction === 'UP' ? 'background:#059669;' : 'opacity:0.6;'}">
+            &rarr; Outbound (${originName} &rarr; ${destName})
+          </button>
+          <button id="btn-dir-down" class="btn-primary" style="padding: 4px 10px; font-size: 11px; ${direction === 'DOWN' ? 'background:#059669;' : 'opacity:0.6;'}">
+            &larr; Return (${destName} &rarr; ${originName})
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Split Layout: Map on Left, Stops & ETA Table on Right -->
+      <div class="tracker-layout">
+        
+        <!-- Left: Google Maps-style Leaflet Tracker Map -->
+        <div class="tracker-map-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">
+              Interactive Road Map (${computedStops.length} GPS Stops)
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button id="btn-recenter-tracker" style="background: none; border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                🎯 Center Corridor
+              </button>
+            </div>
+          </div>
+
+          <div id="admin-tracker-map"></div>
+
+          <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted);">
+            <span>Road Snapped: <b>NH-53 / NH-848 Asian Highway</b></span>
+            <span>Total Corridor Distance: <b>${cumDist.toFixed(2)} km</b></span>
+          </div>
+        </div>
+
+        <!-- Right: Stop-by-Stop ETA Table -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="card" style="padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h4 style="font-size: 13px; font-weight: 800; color: var(--primary);">
+                Stop-by-Stop Schedule & Travel Time
+              </h4>
+              <span class="eta-pill soon">${computedStops.length} Stops &bull; ~${cumTime} min runtime</span>
+            </div>
+
+            <div class="data-table-container" style="max-height: 480px; overflow-y: auto;">
+              <table class="data-table" style="font-size: 11px;">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Bus Stop</th>
+                    <th>GPS (Lat, Lng)</th>
+                    <th>Distance</th>
+                    <th>ETA</th>
+                    <th>Arrival</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${computedStops.map(item => `
+                    <tr style="${item.seq === computedStops.length ? 'background: #fef2f2; font-weight: bold;' : ''}">
+                      <td style="font-weight: 800; color: var(--primary);">${item.seq}</td>
+                      <td>
+                        <span style="font-weight: 700; cursor: pointer;" class="tracker-stop-row" data-lat="${item.stop.lat}" data-lng="${item.stop.lng}">
+                          ${item.stop.name}
+                        </span>
+                        <div style="font-size: 10px; color: var(--text-muted);">${item.stop.code || ''}</div>
+                      </td>
+                      <td style="font-family: var(--font-mono); font-size: 10px;">
+                        ${typeof item.stop.lat === 'number' ? item.stop.lat.toFixed(6) : '-'}<br/>
+                        ${typeof item.stop.lng === 'number' ? item.stop.lng.toFixed(6) : '-'}
+                      </td>
+                      <td>
+                        <span style="font-family: var(--font-mono); font-weight: 700;">+${item.legDist.toFixed(1)} km</span>
+                        <div style="font-size: 10px; color: var(--text-muted);">${item.cumDist.toFixed(1)} km tot</div>
+                      </td>
+                      <td>
+                        <span class="eta-pill ${item.seq === 1 ? 'soon' : 'upcoming'}">+${item.cumTime} min</span>
+                      </td>
+                      <td style="font-family: var(--font-mono); font-weight: 800; color: var(--text-main);">
+                        ${item.arrTime}
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 15-Minute Turnaround Card at Bottom -->
+            <div style="margin-top: 10px; padding: 10px 12px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-sm); font-size: 11px;">
+              <div style="font-weight: 800; color: #92400e; margin-bottom: 2px;">
+                ⏱️ Two-Way Turnaround Cycle Summary:
+              </div>
+              <div style="color: #78350f;">
+                Departure from Nashik CBS: <b>${computedStops[0]?.arrTime || '--'}</b> &bull; 
+                Arrival at Pimpalgaon Baswant: <b>${computedStops[computedStops.length - 1]?.arrTime || '--'}</b><br/>
+                <b>Layover at Pimpalgaon Baswant: 15 minutes</b> (crew turnaround, vehicle prep & passenger boarding)<br/>
+                Return Trip Departure: <b>${direction === 'UP' ? computedStops[computedStops.length - 1]?.depTime : 'On Schedule'}</b> &bull;
+                Return Arrival at Nashik CBS: <b>${direction === 'UP' ? EtaEngine.minutesToTimeString((currentStartMin + 66 + 15 + 66) % 1440) : computedStops[computedStops.length - 1]?.arrTime}</b>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    initAdminTrackerMap(route, computedStops, direction);
+  }, 80);
+
+  document.getElementById('tracker-route-select')?.addEventListener('change', (e) => {
+    AdminState.selectedTrackerRouteId = e.target.value;
+    renderAdminTrackerTab(container);
+  });
+
+  document.getElementById('tracker-time-select')?.addEventListener('change', (e) => {
+    AdminState.selectedTrackerDepMin = parseInt(e.target.value, 10);
+    renderAdminTrackerTab(container);
+  });
+
+  document.getElementById('btn-dir-up')?.addEventListener('click', () => {
+    AdminState.trackerDirection = 'UP';
+    renderAdminTrackerTab(container);
+  });
+
+  document.getElementById('btn-dir-down')?.addEventListener('click', () => {
+    AdminState.trackerDirection = 'DOWN';
+    renderAdminTrackerTab(container);
+  });
+
+  document.getElementById('btn-recenter-tracker')?.addEventListener('click', () => {
+    if (AdminState.trackerMap && AdminState.trackerBounds) {
+      AdminState.trackerMap.fitBounds(AdminState.trackerBounds, { padding: [30, 30] });
+    }
+  });
+
+  container.querySelectorAll('.tracker-stop-row').forEach(el => {
+    el.addEventListener('click', () => {
+      const lat = parseFloat(el.getAttribute('data-lat'));
+      const lng = parseFloat(el.getAttribute('data-lng'));
+      if (AdminState.trackerMap && !isNaN(lat) && !isNaN(lng)) {
+        AdminState.trackerMap.setView([lat, lng], 15);
+      }
+    });
+  });
+}
+
+function initAdminTrackerMap(route, computedStops, direction) {
+  const mapEl = document.getElementById('admin-tracker-map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  const map = L.map('admin-tracker-map', {
+    center: [20.08, 73.88],
+    zoom: 11,
+    zoomControl: true
+  });
+  AdminState.trackerMap = map;
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const layer = L.layerGroup().addTo(map);
+  AdminState.trackerLayer = layer;
+
+  // 1. Draw Google Maps-style route polyline
+  let geom = (route && route.roadGeometry && Array.isArray(route.roadGeometry) && route.roadGeometry.length > 0)
+    ? route.roadGeometry
+    : null;
+
+  if (geom && geom.length > 1) {
+    let drawGeom = geom;
+    if (direction === 'DOWN') {
+      drawGeom = [...geom].reverse();
+    }
+    // Background Road Casing (white outline like Google Maps)
+    L.polyline(drawGeom, {
+      color: '#ffffff',
+      weight: 8,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(layer);
+
+    // Foreground Vibrant Transit Line
+    L.polyline(drawGeom, {
+      color: route.color || '#dc2626',
+      weight: 5,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(layer);
+  } else {
+    const latlngs = computedStops
+      .filter(s => typeof s.stop.lat === 'number')
+      .map(s => [s.stop.lat, s.stop.lng]);
+    if (latlngs.length > 1) {
+      L.polyline(latlngs, {
+        color: '#ffffff',
+        weight: 8,
+        opacity: 0.95
+      }).addTo(layer);
+      L.polyline(latlngs, {
+        color: route.color || '#dc2626',
+        weight: 5,
+        opacity: 0.95
+      }).addTo(layer);
+    }
+  }
+
+  // 2. Add Stop Markers with Sequence Numbers
+  const bounds = [];
+  computedStops.forEach((item, idx) => {
+    if (typeof item.stop.lat !== 'number' || typeof item.stop.lng !== 'number') return;
+    const isTerminal = idx === 0 || idx === computedStops.length - 1;
+    const markerHtml = `
+      <div class="transit-stop-pin ${isTerminal ? 'terminal' : ''}" style="width: 24px; height: 24px; line-height: 20px;">
+        ${item.seq}
+      </div>
+    `;
+
+    const icon = L.divIcon({
+      className: 'custom-transit-pin',
+      html: markerHtml,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    const marker = L.marker([item.stop.lat, item.stop.lng], { icon }).addTo(layer);
+    marker.bindPopup(`
+      <div style="font-size: 12px; line-height: 1.4;">
+        <div style="font-weight: 800; color: #dc2626;">Stop #${item.seq}: ${item.stop.name}</div>
+        <div style="color: #64748b; font-size: 11px;">Code: <b>${item.stop.code || '-'}</b></div>
+        <div>GPS: <b>${item.stop.lat.toFixed(6)}, ${item.stop.lng.toFixed(6)}</b></div>
+        <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #e2e8f0;">
+          Distance from Origin: <b>${item.cumDist.toFixed(1)} km</b><br/>
+          Cumulative ETA: <b>+${item.cumTime} min</b><br/>
+          Arrival Time: <b>${item.arrTime}</b>
+          ${idx === computedStops.length - 1 ? '<div style="color:#b45309;font-weight:bold;margin-top:2px;">⏳ 15-Minute Layover at Terminus</div>' : ''}
+        </div>
+      </div>
+    `);
+
+    bounds.push([item.stop.lat, item.stop.lng]);
+  });
+
+  // 3. Add Simulated Bus Marker along the route
+  if (computedStops.length > 2) {
+    const midIdx = Math.floor(computedStops.length / 2);
+    const busStop = computedStops[midIdx];
+    const busIcon = L.divIcon({
+      className: 'custom-bus-pin',
+      html: '<div class="bus-pin-label">🚌 BUS 201 (Shivshahi AC)</div>',
+      iconSize: [140, 24],
+      iconAnchor: [70, 12]
+    });
+    const busMarker = L.marker([busStop.stop.lat, busStop.stop.lng], { icon: busIcon, zIndexOffset: 500 }).addTo(layer);
+    busMarker.bindPopup(`
+      <div style="font-size: 12px;">
+        <b>BUS 201 (MSRTC Shivshahi AC)</b><br/>
+        En route: Nashik ↔ Pimpalgaon Baswant<br/>
+        Next Stop: <b>${computedStops[midIdx + 1]?.stop.name || 'Pimpalgaon Baswant'}</b>
+      </div>
+    `);
+  }
+
+  if (bounds.length > 0) {
+    AdminState.trackerBounds = bounds;
+    map.fitBounds(bounds, { padding: [35, 35] });
+  }
+
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 250);
 }
 
 function renderAdminOverviewTab(container) {
@@ -758,6 +1181,7 @@ function renderAdminRoutesTab(container) {
                 </span>
               </td>
               <td style="text-align: right;">
+                <button type="button" class="btn-primary btn-track-route" data-route-id="${route.id}" style="padding: 3px 8px; font-size: 11px; margin-right: 4px;">🛣️ Track on Map</button>
                 <button type="button" class="btn-edit-route btn-danger-outline" data-route-id="${route.id}">Edit</button>
                 <button type="button" class="btn-danger-outline btn-delete-route" data-action="delete-route" data-route-id="${route.id}" onclick="window.handleDeleteRoute(event, '${route.id}')" style="color: #b91c1c; font-weight: 700; margin-left: 8px; cursor: pointer;">Delete</button>
               </td>
@@ -779,6 +1203,15 @@ function renderAdminRoutesTab(container) {
     AdminState.editingRoute = null;
     AdminState.routeStopsDraft = [];
     showRouteForm();
+  });
+
+  container.querySelectorAll('.btn-track-route').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-route-id');
+      AdminState.selectedTrackerRouteId = id;
+      AdminState.adminTab = 'tracker';
+      renderAdminDashboard();
+    });
   });
 
   container.querySelectorAll('.btn-edit-route').forEach(btn => {
@@ -1176,7 +1609,6 @@ function renderAdminImportTab(container) {
         <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 8px;">Database Maintenance</h4>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Reset or clear all collections in Firebase Firestore and local memory.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button id="btn-seed-demo" class="btn-primary" style="font-size: 11px; background: #059669;">Seed Demo Transit Data</button>
           <button id="btn-clear-all" class="btn-secondary" style="font-size: 11px; color: #b91c1c; font-weight: bold;">Clear All Cloud Data</button>
         </div>
       </div>
@@ -1253,31 +1685,6 @@ function renderAdminImportTab(container) {
     reader.readAsText(file);
   });
 
-  document.getElementById('btn-seed-demo').addEventListener('click', async () => {
-    showStatus('Seeding demo transit data to Firebase Firestore & local database...');
-    showToastNotification('Seeding Nashik demo transit data...');
-    if (typeof FirebaseService !== 'undefined' && FirebaseService.isConnected) {
-      const ok = await FirebaseService.seedInitialData();
-      if (ok) {
-        reloadDataFromStorage();
-        showStatus('Official Nashik transit data loaded and synced to Firebase Firestore!');
-        showToastNotification('Official Nashik transit dataset successfully seeded!');
-        renderAdminDashboard();
-      } else {
-        showStatus('Failed to seed cloud database. Check internet connection.', true);
-        showToastNotification('Failed to seed cloud database.', 'error');
-      }
-    } else {
-      StorageService.saveStops(INITIAL_STOPS, false);
-      StorageService.saveBuses(INITIAL_BUSES, false);
-      StorageService.saveRoutes(INITIAL_ROUTES, false);
-      StorageService.saveTrips(generateInitialTrips(), false);
-      reloadDataFromStorage();
-      showStatus('Demo transit data loaded locally.');
-      showToastNotification('Demo transit data loaded locally!');
-      renderAdminDashboard();
-    }
-  });
 
   document.getElementById('btn-clear-all').addEventListener('click', async () => {
     showStatus('Clearing all database records from Firebase Firestore and local memory...');

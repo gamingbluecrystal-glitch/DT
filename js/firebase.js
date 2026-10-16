@@ -73,6 +73,9 @@ const FirebaseService = {
           snapshot.forEach((doc) => {
             const data = doc.data();
             if (!data.id) data.id = doc.id;
+            if (colName === 'routes' && Array.isArray(data.roadGeometry)) {
+              data.roadGeometry = data.roadGeometry.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
+            }
             items.push(data);
           });
 
@@ -137,10 +140,14 @@ const FirebaseService = {
 
       // Add/Update
       items.forEach((item) => {
+        let docData = { ...item };
+        if (collectionName === 'routes' && Array.isArray(docData.roadGeometry)) {
+          docData.roadGeometry = docData.roadGeometry.map(p => Array.isArray(p) ? { lat: p[0], lng: p[1] } : p);
+        }
         operations.push({
           type: 'set',
           ref: this.db.collection(collectionName).doc(item.id),
-          data: item
+          data: docData
         });
       });
 
@@ -209,37 +216,6 @@ const FirebaseService = {
       setTimeout(() => {
         this.isSyncingOutbound = false;
       }, 300);
-    }
-  },
-
-  async seedInitialData() {
-    if (!this.db) return false;
-    try {
-      this.updateStatusBadge(true, 'Seeding Data...');
-      const stops = typeof INITIAL_STOPS !== 'undefined' ? INITIAL_STOPS : [];
-      const buses = typeof INITIAL_BUSES !== 'undefined' ? INITIAL_BUSES : [];
-      const routes = typeof INITIAL_ROUTES !== 'undefined' ? INITIAL_ROUTES : [];
-      const trips = typeof generateInitialTrips === 'function' ? generateInitialTrips() : [];
-
-      await this.saveStops(stops);
-      await this.saveBuses(buses);
-      await this.saveRoutes(routes);
-      await this.saveTrips(trips);
-
-      // Also persist locally
-      StorageService.saveStops(stops, false);
-      StorageService.saveBuses(buses, false);
-      StorageService.saveRoutes(routes, false);
-      StorageService.saveTrips(trips, false);
-
-      window.dispatchEvent(new Event('smartbus_storage_updated'));
-      console.log('Default transit data seeded to Firebase Firestore successfully.');
-      this.updateStatusBadge(true, 'Demo Seeded');
-      return true;
-    } catch (err) {
-      console.error('Failed to seed demo data to Firebase:', err);
-      this.updateStatusBadge(false, 'Seed Failed');
-      return false;
     }
   },
 
