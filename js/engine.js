@@ -315,7 +315,7 @@ const EtaEngine = {
   /**
    * Filter and sort buses arriving at the given stop.
    */
-  getBusesForStop(targetStopId, currentMinutes, trips, routesMap, busesMap, stopsMap, filterNext20MinutesOnly = false) {
+  getBusesForStop(targetStopId, currentMinutes, trips, routesMap, busesMap, stopsMap, filterNext20MinutesOnly = false, includePassed = true) {
     const results = [];
 
     for (const trip of trips) {
@@ -330,20 +330,35 @@ const EtaEngine = {
       const etaResult = this.calculateBusEtaForStop(trip, route, bus, targetStopId, currentMinutes, stopsMap);
       if (!etaResult) continue;
 
-      if (etaResult.status === 'Passed') continue;
+      // Attach trip-level metadata if present
+      etaResult.operator = trip.operator || bus.operator || 'MSRTC';
+      etaResult.category = trip.category || bus.category || 'msrtc';
+      etaResult.config = trip.config || bus.config || 'Ordinary';
+      etaResult.boardingPoint = trip.boardingPoint || (etaResult.originStop ? etaResult.originStop.name : 'Terminal');
+      etaResult.departureTimeDisplay = trip.departureTimeDisplay || '';
 
       if (filterNext20MinutesOnly) {
         if (etaResult.etaMinutes >= 0 && etaResult.etaMinutes <= 20) {
           results.push(etaResult);
         }
       } else {
-        if (etaResult.etaMinutes >= 0) {
+        if (includePassed || etaResult.etaMinutes >= 0) {
           results.push(etaResult);
         }
       }
     }
 
-    results.sort((a, b) => a.etaMinutes - b.etaMinutes);
+    if (filterNext20MinutesOnly) {
+      results.sort((a, b) => a.etaMinutes - b.etaMinutes);
+    } else {
+      // In All Trips mode: sort by scheduled arrival time at this stop
+      results.sort((a, b) => {
+        const timeA = this.timeStringToMinutes(a.expectedArrivalTime);
+        const timeB = this.timeStringToMinutes(b.expectedArrivalTime);
+        return timeA - timeB;
+      });
+    }
+
     return results;
   }
 };

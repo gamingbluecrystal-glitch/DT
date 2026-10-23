@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SmartBus – Schedule-Based Bus Tracking & ETA System</title>
   <meta name="description" content="Schedule-based public bus tracking, interpolated real-time ETA engine, and route viewer." />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23102A43%22/><path d=%22M7 8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v13a2 2 0 0 1-2 2h-1l-1 3h-2l-.5-3h-9l-.5 3H8l-1-3H6a2 2 0 0 1-2-2V8zm2 2v6h14V10H9zm2 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm10 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z%22 fill=%22%23E65100%22/></svg>" />
 
   <!-- Cache Control -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -21,22 +21,33 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
   <!-- Pure CSS Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=20261002_v5" />
+  <link rel="stylesheet" href="css/style.css?v=20261023_v28" />
 </head>
-<body>
-  <div class="app-container">
+<body class="admin-page-body">
+  <div class="app-container" style="min-height: 100vh;">
 
-    <!-- Top Navigation Header -->
-    <header class="navbar">
-      <div class="navbar-inner">
-        <div class="nav-brand" id="brand-header" title="SmartBus">
-          <div class="brand-badge">BUS</div>
-          <h1 class="brand-title">SmartBus</h1>
-        </div>
+    <!-- Top Navigation Header (Matching Admin UI) -->
+    <header class="admin-navbar">
+      <div class="admin-navbar-inner">
+        <a href="index.html" class="admin-brand" id="brand-header" title="SmartBus">
+          <span class="admin-brand-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 6v6"></path>
+              <path d="M16 6v6"></path>
+              <path d="M4 6h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1H7v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path>
+              <circle cx="7" cy="15" r="1.5"></circle>
+              <circle cx="17" cy="15" r="1.5"></circle>
+            </svg>
+          </span>
+          <span class="admin-brand-title">SmartBus</span>
+        </a>
 
-        <div class="nav-controls">
-          <div id="db-status-badge" class="db-status-badge" title="Firebase Firestore: busapp-cf8fb"><span class="status-dot"></span> Firebase Connecting...</div>
+        <div class="admin-nav-controls" style="display: flex; align-items: center; gap: 12px;">
           <div class="nav-clock" id="nav-clock-time">--:--</div>
+          <a href="admin.html" class="admin-passenger-link" id="link-admin-app" title="Admin Portal">
+            <span>Admin Portal</span>
+            <span class="admin-link-arrow">↗</span>
+          </a>
         </div>
       </div>
     </header>
@@ -45,30 +56,196 @@
     <div class="simulation-bar">
       <div class="simulation-bar-inner">
         <div class="sim-controls-group">
-          <label for="sim-time-input" class="sim-label">Time:</label>
+          <label for="sim-time-input" class="sim-label">Simulation Time:</label>
           <input type="time" id="sim-time-input" class="sim-time-input" />
         </div>
       </div>
     </div>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
+    <!-- Main Content Area with Transit Watermarks in Background -->
+    <main class="passenger-page-wrapper">
 
-      <!-- Passenger View -->
-      <section id="passenger-view" class="passenger-grid">
-        <!-- Left Column: Stop Selector & Bus Arrival Cards -->
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-          <!-- Stop Selector Card -->
-          <div class="card">
-            <label for="stop-select" class="selector-label">Bus Stop</label>
-            <select id="stop-select" class="select-control"></select>
+      <!-- Floating Transparent Bus & Transit Watermark Icons in Background -->
+      <div class="admin-login-icons-bg" aria-hidden="true">
+        <!-- 1. Bus Front (Top-Left) -->
+        <div class="bg-transit-icon bg-icon-top-left" title="Bus">
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="15" rx="3"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <circle cx="7" cy="14" r="1.5"></circle>
+            <circle cx="17" cy="14" r="1.5"></circle>
+            <line x1="6" y1="18" x2="6" y2="21"></line>
+            <line x1="18" y1="18" x2="18" y2="21"></line>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+          </svg>
+        </div>
+
+        <!-- 2. Transit Pass / Ticket (Top-Center) -->
+        <div class="bg-transit-icon bg-icon-top-center accent-orange" title="Ticket">
+          <svg width="95" height="95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"></path>
+            <line x1="13" y1="5" x2="13" y2="19" stroke-dasharray="2 2"></line>
+          </svg>
+        </div>
+
+        <!-- 3. Side Transit Bus (Top-Right) -->
+        <div class="bg-transit-icon bg-icon-top-right" title="Transit Bus">
+          <svg width="140" height="140" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="8" width="28" height="15" rx="3"></rect>
+            <line x1="2" y1="15" x2="30" y2="15"></line>
+            <line x1="8" y1="8" x2="8" y2="15"></line>
+            <line x1="14" y1="8" x2="14" y2="15"></line>
+            <line x1="20" y1="8" x2="20" y2="15"></line>
+            <line x1="26" y1="8" x2="26" y2="15"></line>
+            <circle cx="8" cy="23" r="2.5"></circle>
+            <circle cx="24" cy="23" r="2.5"></circle>
+          </svg>
+        </div>
+
+        <!-- 4. Bus Stop Station Sign (Mid-Left) -->
+        <div class="bg-transit-icon bg-icon-mid-left accent-orange" title="Bus Stop">
+          <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="2" x2="12" y2="22"></line>
+            <circle cx="12" cy="7" r="4.5"></circle>
+            <rect x="9.5" y="5.5" width="5" height="3" rx="0.5"></rect>
+            <line x1="7" y1="22" x2="17" y2="22"></line>
+          </svg>
+        </div>
+
+        <!-- 5. GPS Transit Location Pin with Bus Icon (Mid-Right) -->
+        <div class="bg-transit-icon bg-icon-mid-right" title="Route Pin">
+          <svg width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
+            <rect x="9" y="6" width="6" height="5" rx="1"></rect>
+            <circle cx="10.5" cy="9.5" r="0.6"></circle>
+            <circle cx="13.5" cy="9.5" r="0.6"></circle>
+          </svg>
+        </div>
+
+        <!-- 6. Steering Wheel / Fleet Navigation (Bottom-Left) -->
+        <div class="bg-transit-icon bg-icon-bottom-left" title="Fleet Steering">
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+            <line x1="12" y1="2.5" x2="12" y2="9"></line>
+            <line x1="4.2" y1="16.5" x2="9.4" y2="13.5"></line>
+            <line x1="19.8" y1="16.5" x2="14.6" y2="13.5"></line>
+          </svg>
+        </div>
+
+        <!-- 7. Timetable / Schedule Clock (Bottom-Right) -->
+        <div class="bg-transit-icon bg-icon-bottom-right accent-orange" title="Schedule">
+          <svg width="115" height="115" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <polyline points="12 7 12 12 15 15"></polyline>
+            <path d="M19.5 4.5l1.5 1.5"></path>
+            <path d="M4.5 4.5l-1.5 1.5"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Subtle Road Horizon Art on Bottom -->
+      <div class="admin-login-bg-art" aria-hidden="true">
+        <svg viewBox="0 0 1200 360" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
+          <path d="M0 320 H1200" stroke="#163653" stroke-width="2" stroke-dasharray="10 10" opacity="0.14" />
+          <path d="M0 340 H1200" stroke="#163653" stroke-width="1.5" opacity="0.2" />
+          <!-- Stylized Bus Stop Shelter -->
+          <g opacity="0.16" stroke="#163653" stroke-width="2">
+            <path d="M140 340 V230 H270 V340" />
+            <path d="M120 230 H290" stroke-width="4" stroke="#F15A24" opacity="0.4" />
+            <path d="M150 285 H260" stroke-width="2" />
+            <circle cx="285" cy="215" r="13" fill="#ffffff" stroke="#163653" stroke-width="2" />
+            <path d="M285 228 V340" />
+          </g>
+          <!-- Bus Silhouette on Road -->
+          <g opacity="0.15" stroke="#163653" stroke-width="2" fill="none">
+            <rect x="350" y="270" width="85" height="45" rx="4" />
+            <line x1="350" y1="295" x2="435" y2="295" />
+            <circle cx="370" cy="317" r="7" fill="#ffffff" />
+            <circle cx="415" cy="317" r="7" fill="#ffffff" />
+          </g>
+          <!-- Distance Campus / Transit Skyline -->
+          <g opacity="0.12" fill="#163653">
+            <rect x="880" y="210" width="45" height="130" rx="2" />
+            <rect x="935" y="180" width="60" height="160" rx="2" />
+            <rect x="1005" y="230" width="50" height="110" rx="2" />
+            <rect x="1065" y="195" width="40" height="145" rx="2" />
+            <rect x="50" y="250" width="50" height="90" rx="2" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Passenger Foreground Content -->
+      <div class="passenger-page-content">
+        <section id="passenger-view" class="passenger-dashboard-layout">
+          
+          <!-- Top Row: Stop Selector (Left) & Live Map (Right) -->
+          <div class="passenger-top-row">
+            <!-- Left Panel: Stop Selection Card -->
+            <div class="passenger-stop-card card">
+              <div>
+                <label for="stop-select" class="selector-label">Select Bus Stop</label>
+                <select id="stop-select" class="select-control"></select>
+              </div>
+
+              <!-- Selected Stop Quick Details -->
+              <div class="selected-stop-meta" id="selected-stop-meta">
+                <div class="stop-meta-badge">
+                  <span class="stop-meta-num" id="stop-meta-num">Halt #1</span>
+                  <span class="stop-meta-code" id="stop-meta-code">CBS-01</span>
+                </div>
+                <div class="stop-meta-info">
+                  <div class="stop-meta-name" id="stop-meta-name">Nashik CBS (Old CBS)</div>
+                  <div class="stop-meta-landmark" id="stop-meta-landmark">Central State Transport Terminus</div>
+                </div>
+              </div>
+
+              <!-- Highway Corridor Tag -->
+              <div class="corridor-quick-tag">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <span style="font-weight: 800; color: #102A43; font-size: 12px;">Route 501 Highway Corridor</span>
+                  <span class="corridor-stat-pill">31.0 km</span>
+                </div>
+                <div style="font-size: 11px; color: #627D98; margin-top: 3px;">
+                  Nashik CBS &harr; Pimpalgaon Baswant &bull; 9 Halts &bull; 50 min
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Live Road Map -->
+            <div class="passenger-map-panel">
+              <div class="map-card">
+                <div class="map-card-header">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="map-card-header-title">Live Road Map</span>
+                    <span class="corridor-stat-pill" style="font-size: 10.5px;">NH-53 Asian Highway</span>
+                  </div>
+                  <button id="btn-locate-me" class="btn-locate" title="Show my current location on map"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>My Location</button>
+                </div>
+                <div id="map-container"></div>
+                <div class="map-card-footer">
+                  <div id="map-stops-counter"></div>
+                  <div style="display: flex; gap: 10px; align-items: center; font-size: 11px;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #102A43;">
+                      <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; display: inline-block;"></span> 22 In Transit
+                    </span>
+                    <span style="display: inline-flex; align-items: center; gap: 4px; color: #627D98;">
+                      <span style="width: 8px; height: 8px; border-radius: 50%; background: #0284C7; display: inline-block;"></span> 6 Layover
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Bus Arrivals List Container -->
-          <div class="card">
+          <!-- Bottom Section: Bus Arrivals Grid (Full Width Directly Below the Map!) -->
+          <div class="passenger-arrivals-section card">
             <div class="list-header">
               <div>
                 <h2 class="list-title" id="arrivals-title-wrapper">Arrivals: <span id="arrivals-stop-name"></span></h2>
+                <div class="list-subtitle" id="arrivals-subtitle" style="font-size: 11.5px; color: #627D98; margin-top: 2px;">
+                  Real-time highway departures, arrival countdowns, and platform boarding points
+                </div>
               </div>
               <div class="filter-btn-group">
                 <button id="btn-filter-20min" class="filter-btn active">Next 20 Min</button>
@@ -76,25 +253,12 @@
               </div>
             </div>
 
-            <!-- Dynamic Bus Cards Stack -->
-            <div id="bus-cards-container" class="bus-cards-stack"></div>
+            <!-- Dynamic Bus Cards in Multi-Column Responsive Grid -->
+            <div id="bus-cards-container"></div>
           </div>
-        </div>
 
-        <!-- Right Column: Leaflet Map -->
-        <div>
-          <div class="map-card">
-            <div class="map-card-header">
-              <span class="map-card-header-title">Live Map</span>
-              <button id="btn-locate-me" class="btn-locate" title="Show my current location on map">📍 My Location</button>
-            </div>
-            <div id="map-container"></div>
-            <div class="map-card-footer">
-              <div id="map-stops-counter"></div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
 
     <!-- Route Details Modal Dialog -->
@@ -103,6 +267,7 @@
         <div class="modal-header">
           <div>
             <h3 class="modal-title" id="modal-bus-title">Route Details</h3>
+            <p class="modal-subtitle" id="modal-bus-subtitle" style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;"></p>
           </div>
           <button id="btn-modal-close-x" class="btn-close-modal" aria-label="Close dialog">&times;</button>
         </div>
@@ -141,7 +306,10 @@
     <!-- Application Footer -->
     <footer class="footer">
       <div class="footer-inner">
-        <div>SmartBus</div>
+        <div>SmartBus &bull; Schedule-Based Transit &amp; ETA Tracking</div>
+        <div>
+          <a href="admin.html" class="footer-admin-link">Admin Portal &rarr;</a>
+        </div>
       </div>
     </footer>
 
@@ -155,9 +323,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <!-- Application Logic Scripts -->
-  <script src="js/firebase.js?v=20261010_v2"></script>
-  <script src="js/engine.js?v=20261010_v2"></script>
-  <script src="js/storage.js?v=20261010_v2"></script>
-  <script src="js/app.js?v=20261010_v2"></script>
+  <script src="js/firebase.js?v=20261023_v26"></script>
+  <script src="js/corridor_data.js?v=20261023_v26"></script>
+  <script src="js/engine.js?v=20261023_v26"></script>
+  <script src="js/storage.js?v=20261023_v26"></script>
+  <script src="js/app.js?v=20261023_v28"></script>
 </body>
 </html>

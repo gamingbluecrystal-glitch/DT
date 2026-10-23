@@ -19,6 +19,8 @@ const AppState = {
 
   selectedStopId: '',
   filterNext20Min: true,
+  allTripsCategoryFilter: 'all',
+  allTripsSearchQuery: '',
   simulatedMinutes: getRealTimeMinutes(),
   isSimulating: true,
   simulationSpeed: 1,
@@ -166,7 +168,7 @@ function renderUserLocation(lat, lng, accuracy, panTo = true) {
   popupDiv.style.fontSize = '12px';
   popupDiv.style.lineHeight = '1.4';
   popupDiv.innerHTML = `
-    <div style="font-weight: 800; color: #2563eb; margin-bottom: 2px;">📍 Your Current Location</div>
+    <div style="font-weight: 800; color: #2563eb; margin-bottom: 2px;">Your Current GPS Location</div>
     <div style="color: #64748b; font-size: 11px;">Accuracy: &plusmn;${Math.round(accuracy || 0)}m</div>
     <div style="color: #334155; margin-top: 2px;">Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</div>
     ${nearestInfoHtml}
@@ -219,14 +221,14 @@ function handleLocateUser() {
 
   if (btn) {
     btn.disabled = true;
-    btn.textContent = '⏳ Locating...';
+    btn.innerHTML = 'Locating GPS...';
   }
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = '📍 My Location';
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>My Location';
       }
       const { latitude, longitude, accuracy } = position.coords;
       renderUserLocation(latitude, longitude, accuracy, true);
@@ -234,7 +236,7 @@ function handleLocateUser() {
     (error) => {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = '📍 My Location';
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>My Location';
       }
       let errorMsg = 'Unable to retrieve your location.';
       if (error.code === 1) {
@@ -353,7 +355,7 @@ function updateMap() {
   activeBuses.forEach(({ bus, route, location }) => {
     if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number' || location.lat === null) return;
 
-    const busHtml = `<div class="bus-pin-label">🚌 ${bus.busNumber}</div>`;
+    const busHtml = `<div class="bus-pin-label"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px; margin-right:3px;"><rect x="3" y="4" width="18" height="15" rx="2"></rect><circle cx="7" cy="18" r="2"></circle><circle cx="17" cy="18" r="2"></circle><line x1="3" y1="10" x2="21" y2="10"></line></svg>${bus.busNumber}</div>`;
     const busIcon = L.divIcon({
       className: 'custom-bus-pin',
       html: busHtml,
@@ -420,7 +422,19 @@ function renderStopSelector() {
     return;
   }
 
-  AppState.stops.forEach(stop => {
+  const CORRIDOR_HALTS_INFO = {
+    'stop-cbs':         { num: 'Halt #1', code: 'CBS-01', landmark: 'Central State Transport Terminus' },
+    'stop-nimani':      { num: 'Halt #2', code: 'NMN-02', landmark: 'Panchavati City Transit Hub' },
+    'stop-adgaon':      { num: 'Halt #3', code: 'ADG-03', landmark: 'NH-3 Highway Commercial Junction' },
+    'stop-amrutdham':   { num: 'Halt #4', code: 'AMT-04', landmark: 'Adgaon Residential Corridor Halt' },
+    'stop-bali-mandir': { num: 'Halt #5', code: 'BLM-05', landmark: 'Highway Landmark Station' },
+    'stop-jatra':       { num: 'Halt #6', code: 'JTR-06', landmark: 'Dwarka Bypass Flyover Interchange' },
+    'stop-juna-jakat':  { num: 'Halt #7', code: 'JJN-07', landmark: 'MET Bhujbal Knowledge City / Octroi' },
+    'stop-ojhar':       { num: 'Halt #8', code: 'OJH-08', landmark: 'HAL Aerospace Township & Highway Stand' },
+    'stop-pimpalgaon':  { num: 'Halt #9', code: 'PBW-09', landmark: 'APMC Market & Highway Bus Terminus' }
+  };
+
+  AppState.stops.forEach((stop, idx) => {
     const opt = document.createElement('option');
     opt.value = stop.id;
     opt.textContent = stop.code ? `${stop.name} (${stop.code})` : stop.name;
@@ -429,6 +443,19 @@ function renderStopSelector() {
     }
     dropdown.appendChild(opt);
   });
+
+  const selectedStop = AppState.stopsMap.get(AppState.selectedStopId);
+  if (selectedStop) {
+    const meta = CORRIDOR_HALTS_INFO[selectedStop.id] || { num: `Halt #${selectedStop.sequenceOrder || 1}`, code: selectedStop.code || '', landmark: 'Highway Transit Stop' };
+    const numEl = document.getElementById('stop-meta-num');
+    const codeEl = document.getElementById('stop-meta-code');
+    const nameEl = document.getElementById('stop-meta-name');
+    const landmarkEl = document.getElementById('stop-meta-landmark');
+    if (numEl) numEl.textContent = meta.num;
+    if (codeEl) codeEl.textContent = meta.code;
+    if (nameEl) nameEl.textContent = selectedStop.name;
+    if (landmarkEl) landmarkEl.textContent = meta.landmark;
+  }
 }
 
 function formatEtaDisplay(eta) {
@@ -449,9 +476,33 @@ function renderBusList() {
     stopNameEl.textContent = selectedStop ? selectedStop.name : '';
   }
 
+  // Pre-calculate counts for both modes
+  const next20Arrivals = EtaEngine.getBusesForStop(
+    AppState.selectedStopId,
+    AppState.simulatedMinutes,
+    AppState.trips,
+    AppState.routesMap,
+    AppState.busesMap,
+    AppState.stopsMap,
+    true
+  );
+
+  const allCorridorArrivals = EtaEngine.getBusesForStop(
+    AppState.selectedStopId,
+    AppState.simulatedMinutes,
+    AppState.trips,
+    AppState.routesMap,
+    AppState.busesMap,
+    AppState.stopsMap,
+    false,
+    true
+  );
+
   if (btn20 && btnAll) {
     btn20.classList.toggle('active', AppState.filterNext20Min);
     btnAll.classList.toggle('active', !AppState.filterNext20Min);
+    btn20.innerHTML = `Next 20 Min <span style="opacity:0.85; font-size:10.5px;">(${next20Arrivals.length})</span>`;
+    btnAll.innerHTML = `All Trips <span style="opacity:0.85; font-size:10.5px;">(${allCorridorArrivals.length})</span>`;
   }
 
   if (!listContainer) return;
@@ -467,82 +518,294 @@ function renderBusList() {
     return;
   }
 
-  const arrivals = EtaEngine.getBusesForStop(
-    AppState.selectedStopId,
-    AppState.simulatedMinutes,
-    AppState.trips,
-    AppState.routesMap,
-    AppState.busesMap,
-    AppState.stopsMap,
-    AppState.filterNext20Min
-  );
+  // Helper for operator badge markup with official transit fares
+  const getOperatorBadgeHtml = (item) => {
+    const cat = item.category || 'msrtc';
+    if (cat === 'msrtc') {
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+          <span class="operator-badge msrtc">MSRTC &bull; Lalpari Ordinary</span>
+          <span class="fare-chip">Fare: &#8377;22</span>
+        </div>
+      `;
+    } else if (cat === 'citilinc') {
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+          <span class="operator-badge citilinc">Citilinc CNG Feeder (Every 20m)</span>
+          <span class="fare-chip">Fare: &#8377;15</span>
+        </div>
+      `;
+    } else {
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+          <span class="operator-badge private">${item.operator || 'Private Intercity'}</span>
+          <span class="fare-chip">Fare: &#8377;45</span>
+        </div>
+      `;
+    }
+  };
 
-  if (arrivals.length === 0) {
-    listContainer.innerHTML = `
-      <div class="empty-state">
-        <h4>No upcoming buses scheduled</h4>
-        <button class="btn-primary" id="btn-empty-show-all" style="margin-top: 10px;">View All Trips</button>
+  // MODE 1: Next 20 Minutes Live ETA View
+  if (AppState.filterNext20Min) {
+    if (next20Arrivals.length === 0) {
+      const nextUpcoming = allCorridorArrivals.find(a => a.etaMinutes > 20);
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'empty-state';
+      emptyDiv.innerHTML = `
+        <h4>No buses arriving in the next 20 minutes</h4>
+        <p style="color: var(--text-muted); font-size: 13px; margin: 6px 0 12px 0;">
+          ${nextUpcoming ? `Next scheduled bus is <b>${nextUpcoming.bus.busNumber}</b> (${nextUpcoming.operator}) arriving at <b>${nextUpcoming.expectedArrivalTime}</b> (in ${Math.round(nextUpcoming.etaMinutes)} min).` : 'No further buses scheduled today on this corridor.'}
+        </p>
+        <button class="btn-primary" id="btn-empty-show-all">Browse All Trips (${allCorridorArrivals.length})</button>
+      `;
+      const btnEmptyAll = emptyDiv.querySelector('#btn-empty-show-all');
+      if (btnEmptyAll) {
+        btnEmptyAll.addEventListener('click', () => {
+          AppState.filterNext20Min = false;
+          renderBusList();
+        });
+      }
+      listContainer.appendChild(emptyDiv);
+      return;
+    }
+
+    const next20Grid = document.createElement('div');
+    next20Grid.className = 'bus-cards-grid';
+    listContainer.appendChild(next20Grid);
+
+    next20Arrivals.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'bus-card';
+
+      let statusClass = 'later';
+      if (item.status === 'Arriving Soon') statusClass = 'soon';
+      else if (item.status === 'Upcoming') statusClass = 'upcoming';
+
+      const chassisLabel = item.category === 'citilinc' ? 'Tata Marcopolo BS-VI CNG' : (item.category === 'msrtc' ? 'Ashok Leyland 210HP Viking' : 'Eicher Starline 32S');
+
+      card.innerHTML = `
+        <div class="bus-card-top">
+          <div class="bus-id-group">
+            <span class="bus-badge">${item.bus.busNumber}</span>
+            ${item.bus.plateNumber ? `<span class="bus-plate">${item.bus.plateNumber}</span>` : ''}
+          </div>
+          <span class="status-tag ${statusClass}">
+            ${item.status === 'Arriving Soon' ? 'Arriving Soon' : item.status}
+          </span>
+        </div>
+
+        <div style="margin: 6px 0 8px 0;">
+          ${getOperatorBadgeHtml(item)}
+        </div>
+
+        <div class="bus-boarding-info" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+          <span>Bay: <b>${item.boardingPoint || 'Platform 2, CBS'}</b></span>
+          <span style="color: #627D98; font-size: 10.5px;">${chassisLabel}</span>
+        </div>
+
+        <div class="bus-card-route">
+          ${item.originStop.name} &rarr; <span>${item.destinationStop.name}</span>
+        </div>
+
+        <div class="bus-eta-grid">
+          <div>
+            <span class="eta-label">Estimated Arrival</span>
+            <span class="eta-value-big">${formatEtaDisplay(item.etaMinutes)}</span>
+          </div>
+          <div style="text-align: right;">
+            <span class="eta-label">Scheduled Halt</span>
+            <span class="eta-time-val">${item.expectedArrivalTime}</span>
+          </div>
+        </div>
+
+        <div class="bus-card-footer">
+          <span class="stops-remaining">
+            ${item.stopsRemaining === 0 ? 'Approaching current stop' : `${item.stopsRemaining} stop${item.stopsRemaining === 1 ? '' : 's'} away`}
+          </span>
+          <button class="btn-view-route" data-trip-id="${item.tripId}">View Trip Details</button>
+        </div>
+      `;
+
+      const viewBtn = card.querySelector('.btn-view-route');
+      if (viewBtn) {
+        viewBtn.addEventListener('click', () => {
+          openRouteModal(item);
+        });
+      }
+
+      next20Grid.appendChild(card);
+    });
+
+  } else {
+    // MODE 2: All Trips View with Clean Corridor Summary & Category Filters
+    const msrtcCount = allCorridorArrivals.filter(a => a.category === 'msrtc').length;
+    const citilincCount = allCorridorArrivals.filter(a => a.category === 'citilinc').length;
+    const pvtCount = allCorridorArrivals.filter(a => a.category === 'private').length;
+
+    // Corridor Summary Banner
+    const summaryBanner = document.createElement('div');
+    summaryBanner.className = 'corridor-banner';
+    summaryBanner.innerHTML = `
+      <div class="corridor-banner-top">
+        <div class="corridor-title-group">
+          <span class="corridor-num-badge">Route 501</span>
+          <span class="corridor-title">Nashik CBS &harr; Pimpalgaon Baswant</span>
+        </div>
+        <span style="font-size: 11.5px; font-weight: 700; color: #102A43;">Daily Timetable</span>
+      </div>
+      <div class="corridor-meta-pills">
+        <span class="corridor-stat-pill">31.0 km Highway</span>
+        <span class="corridor-stat-pill">50 min runtime</span>
+        <span class="corridor-stat-pill">9 Stops</span>
+        <span class="corridor-stat-pill">17 MSRTC Direct</span>
+        <span class="corridor-stat-pill">47 Citilinc Feeders (Every 20m)</span>
+        <span class="corridor-stat-pill">6 Private AC Sleepers</span>
       </div>
     `;
-    const btnEmptyAll = document.getElementById('btn-empty-show-all');
-    if (btnEmptyAll) {
-      btnEmptyAll.addEventListener('click', () => {
-        AppState.filterNext20Min = false;
+    listContainer.appendChild(summaryBanner);
+
+    // Filter Toolbar
+    const toolbar = document.createElement('div');
+    toolbar.className = 'alltrips-toolbar';
+    toolbar.innerHTML = `
+      <div class="alltrips-pills-row">
+        <button type="button" class="alltrips-pill-btn ${AppState.allTripsCategoryFilter === 'all' ? 'active' : ''}" data-cat="all">All Trips (${allCorridorArrivals.length})</button>
+        <button type="button" class="alltrips-pill-btn ${AppState.allTripsCategoryFilter === 'msrtc' ? 'active' : ''}" data-cat="msrtc">MSRTC Direct (${msrtcCount})</button>
+        <button type="button" class="alltrips-pill-btn ${AppState.allTripsCategoryFilter === 'citilinc' ? 'active' : ''}" data-cat="citilinc">Citilinc Feeders (${citilincCount})</button>
+        <button type="button" class="alltrips-pill-btn ${AppState.allTripsCategoryFilter === 'private' ? 'active' : ''}" data-cat="private">Private Fleet (${pvtCount})</button>
+      </div>
+      <div>
+        <input type="text" id="alltrips-search-box" class="alltrips-search-input" placeholder="Search by bus number, operator, or boarding hub..." value="${AppState.allTripsSearchQuery || ''}" />
+      </div>
+    `;
+    listContainer.appendChild(toolbar);
+
+    // Event listeners for toolbar
+    toolbar.querySelectorAll('.alltrips-pill-btn').forEach(pill => {
+      pill.addEventListener('click', () => {
+        AppState.allTripsCategoryFilter = pill.getAttribute('data-cat');
         renderBusList();
       });
-    }
-    return;
-  }
+    });
 
-  arrivals.forEach(item => {
-    const card = document.createElement('div');
-    card.className = 'bus-card';
-
-    let statusClass = 'later';
-    if (item.status === 'Arriving Soon') statusClass = 'soon';
-    else if (item.status === 'Upcoming') statusClass = 'upcoming';
-
-    card.innerHTML = `
-      <div class="bus-card-top">
-        <div class="bus-id-group">
-          <span class="bus-badge">${item.bus.busNumber}</span>
-          ${item.bus.plateNumber ? `<span class="bus-plate">(${item.bus.plateNumber})</span>` : ''}
-        </div>
-        <span class="status-tag ${statusClass}">${item.status}</span>
-      </div>
-
-      <div class="bus-card-route">
-        ${item.originStop.name} &rarr; <span>${item.destinationStop.name}</span>
-      </div>
-
-      <div class="bus-eta-grid">
-        <div>
-          <span class="eta-label">Estimated Arrival</span>
-          <span class="eta-value-big">${formatEtaDisplay(item.etaMinutes)}</span>
-        </div>
-        <div style="text-align: right;">
-          <span class="eta-label">Expected Time</span>
-          <span class="eta-time-val">${item.expectedArrivalTime}</span>
-        </div>
-      </div>
-
-      <div class="bus-card-footer">
-        <span class="stops-remaining">
-          ${item.stopsRemaining === 0 ? 'At current stop' : `${item.stopsRemaining} stop${item.stopsRemaining === 1 ? '' : 's'} away`}
-        </span>
-        <button class="btn-view-route" data-trip-id="${item.tripId}">View Route</button>
-      </div>
-    `;
-
-    const viewBtn = card.querySelector('.btn-view-route');
-    if (viewBtn) {
-      viewBtn.addEventListener('click', () => {
-        openRouteModal(item);
+    const searchInput = toolbar.querySelector('#alltrips-search-box');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        AppState.allTripsSearchQuery = e.target.value.toLowerCase().trim();
+        renderFilteredAllTripsList();
       });
     }
 
-    listContainer.appendChild(card);
-  });
+    // Container for cards in All Trips
+    const cardsStack = document.createElement('div');
+    cardsStack.id = 'alltrips-cards-stack';
+    cardsStack.className = 'bus-cards-grid';
+    listContainer.appendChild(cardsStack);
+
+    const renderFilteredAllTripsList = () => {
+      cardsStack.innerHTML = '';
+
+      let filtered = allCorridorArrivals;
+      if (AppState.allTripsCategoryFilter !== 'all') {
+        filtered = filtered.filter(a => a.category === AppState.allTripsCategoryFilter);
+      }
+      if (AppState.allTripsSearchQuery) {
+        const q = AppState.allTripsSearchQuery;
+        filtered = filtered.filter(a => 
+          (a.bus.busNumber && a.bus.busNumber.toLowerCase().includes(q)) ||
+          (a.operator && a.operator.toLowerCase().includes(q)) ||
+          (a.config && a.config.toLowerCase().includes(q)) ||
+          (a.boardingPoint && a.boardingPoint.toLowerCase().includes(q)) ||
+          (a.expectedArrivalTime && a.expectedArrivalTime.toLowerCase().includes(q))
+        );
+      }
+
+      if (filtered.length === 0) {
+        cardsStack.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <h4>No trips matching filter</h4>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">Try clearing your search query or selecting "All Trips".</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bus-card';
+
+        let statusClass = 'scheduled';
+        let statusText = `Scheduled (${item.expectedArrivalTime})`;
+
+        if (item.etaMinutes < 0) {
+          statusClass = 'passed';
+          statusText = `Departed (${item.expectedArrivalTime})`;
+        } else if (item.etaMinutes <= 5) {
+          statusClass = 'soon';
+          statusText = `Arriving Soon (${formatEtaDisplay(item.etaMinutes)})`;
+        } else if (item.etaMinutes <= 20) {
+          statusClass = 'upcoming';
+          statusText = `In Next 20m (${formatEtaDisplay(item.etaMinutes)})`;
+        }
+
+        const chassisLabel = item.category === 'citilinc' ? 'Tata Marcopolo BS-VI CNG' : (item.category === 'msrtc' ? 'Ashok Leyland 210HP Viking' : 'Eicher Starline 32S');
+
+        card.innerHTML = `
+          <div class="bus-card-top">
+            <div class="bus-id-group">
+              <span class="bus-badge">${item.bus.busNumber}</span>
+              ${item.bus.plateNumber ? `<span class="bus-plate">${item.bus.plateNumber}</span>` : ''}
+            </div>
+            <span class="status-tag ${statusClass}">${statusText}</span>
+          </div>
+
+          <div style="margin: 6px 0 8px 0;">
+            ${getOperatorBadgeHtml(item)}
+          </div>
+
+          <div class="bus-boarding-info" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+            <span>Bay: <b>${item.boardingPoint || 'Platform 2, CBS'}</b></span>
+            <span style="color: #627D98; font-size: 10.5px;">${chassisLabel}</span>
+          </div>
+
+          <div class="bus-card-route">
+            ${item.originStop.name} &rarr; <span>${item.destinationStop.name}</span>
+          </div>
+
+          <div class="bus-eta-grid">
+            <div>
+              <span class="eta-label">Scheduled Arrival</span>
+              <span class="eta-value-big" style="font-size: 16px;">${item.expectedArrivalTime}</span>
+            </div>
+            <div style="text-align: right;">
+              <span class="eta-label">Live Status / ETA</span>
+              <span class="eta-time-val" style="color: ${item.etaMinutes >= 0 && item.etaMinutes <= 20 ? '#10B981' : '#627D98'};">
+                ${item.etaMinutes < 0 ? 'Departed' : (item.etaMinutes <= 20 ? formatEtaDisplay(item.etaMinutes) : `In ${Math.round(item.etaMinutes)} min`)}
+              </span>
+            </div>
+          </div>
+
+          <div class="bus-card-footer">
+            <span class="stops-remaining">
+              ${item.stopsRemaining === 0 ? 'Approaching current stop' : `${item.stopsRemaining} stop${item.stopsRemaining === 1 ? '' : 's'} away`}
+            </span>
+            <button class="btn-view-route" data-trip-id="${item.tripId}">View Trip Details</button>
+          </div>
+        `;
+
+        const viewBtn = card.querySelector('.btn-view-route');
+        if (viewBtn) {
+          viewBtn.addEventListener('click', () => {
+            openRouteModal(item);
+          });
+        }
+
+        cardsStack.appendChild(card);
+      });
+    };
+
+    renderFilteredAllTripsList();
+  }
 }
 
 function openRouteModal(item) {
@@ -550,8 +813,12 @@ function openRouteModal(item) {
   const modalOverlay = document.getElementById('route-modal-overlay');
   if (!modalOverlay) return;
 
-  document.getElementById('modal-bus-title').textContent = `Route Details: ${item.bus.busNumber}`;
-  document.getElementById('modal-bus-subtitle').textContent = `${item.originStop.name} → ${item.destinationStop.name}`;
+  const titleEl = document.getElementById('modal-bus-title');
+  if (titleEl) titleEl.textContent = `Route Details: ${item.bus.busNumber}`;
+
+  const subtitleEl = document.getElementById('modal-bus-subtitle');
+  if (subtitleEl) subtitleEl.textContent = `${item.originStop.name} → ${item.destinationStop.name} (${item.operator || 'Corridor 501'})`;
+
   document.getElementById('modal-segment-desc').textContent = item.location.currentSegmentDescription;
   document.getElementById('modal-prev-stop').textContent = item.location.previousStop ? item.location.previousStop.name : item.originStop.name;
   document.getElementById('modal-next-stop').textContent = item.location.nextStop ? item.location.nextStop.name : item.destinationStop.name;

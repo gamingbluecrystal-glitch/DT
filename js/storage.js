@@ -22,6 +22,36 @@ const StorageService = {
       'smartbus_settings_v3'
     ];
     legacyKeys.forEach(k => localStorage.removeItem(k));
+
+    // Auto-seed Nashik CBS <-> Pimpalgaon Baswant corridor dataset if not present or missing 31km real distances
+    const existingStops = this.getStops();
+    const existingRoutes = this.getRoutes();
+    const has31kmDistances = existingRoutes.length > 0 && 
+                             existingRoutes[0]?.stops?.some(s => typeof s.distanceKm === 'number' && s.distanceKm > 0);
+
+    if (!has31kmDistances || existingStops.length === 0 || existingRoutes.length === 0) {
+      if (typeof SmartBusCorridorData !== 'undefined') {
+        this.saveStops(SmartBusCorridorData.stops, true);
+        this.saveRoutes([SmartBusCorridorData.route], true);
+        this.saveBuses(SmartBusCorridorData.buses, true);
+        this.saveTrips(SmartBusCorridorData.trips, true);
+        localStorage.setItem('smartbus_corridor_v1_seeded', 'true');
+        localStorage.setItem('smartbus_corridor_v2_seeded', 'true');
+        console.log('Seeded Nashik CBS ↔ Pimpalgaon Baswant corridor dataset with 31.0 km real-world distances');
+      }
+    }
+  },
+
+  resetToCorridorData() {
+    if (typeof SmartBusCorridorData !== 'undefined') {
+      this.saveStops(SmartBusCorridorData.stops, true);
+      this.saveRoutes([SmartBusCorridorData.route], true);
+      this.saveBuses(SmartBusCorridorData.buses, true);
+      this.saveTrips(SmartBusCorridorData.trips, true);
+      localStorage.setItem('smartbus_corridor_v1_seeded', 'true');
+      return true;
+    }
+    return false;
   },
 
   getStops() {
