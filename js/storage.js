@@ -10,7 +10,10 @@ const StorageKeys = {
   TRIPS: 'smartbus_v2_trips',
   SETTINGS: 'smartbus_v2_settings',
   ADMIN_SESSION: 'smartbus_admin_session',
-  INITIALIZED: 'smartbus_v2_initialized'
+  INITIALIZED: 'smartbus_v2_initialized',
+  PASSENGER_MOBILE: 'smartbus_passenger_mobile',
+  PASSENGER_USERS: 'smartbus_v2_passenger_users',
+  PASSENGER_LOGINS: 'smartbus_v2_passenger_logins'
 };
 
 const StorageService = {
@@ -23,35 +26,67 @@ const StorageService = {
     ];
     legacyKeys.forEach(k => localStorage.removeItem(k));
 
-    // Auto-seed Nashik CBS <-> Pimpalgaon Baswant corridor dataset if not present or missing 31km real distances
-    const existingStops = this.getStops();
-    const existingRoutes = this.getRoutes();
-    const has31kmDistances = existingRoutes.length > 0 && 
-                             existingRoutes[0]?.stops?.some(s => typeof s.distanceKm === 'number' && s.distanceKm > 0);
-
-    if (!has31kmDistances || existingStops.length === 0 || existingRoutes.length === 0) {
-      if (typeof SmartBusCorridorData !== 'undefined') {
-        this.saveStops(SmartBusCorridorData.stops, true);
-        this.saveRoutes([SmartBusCorridorData.route], true);
-        this.saveBuses(SmartBusCorridorData.buses, true);
-        this.saveTrips(SmartBusCorridorData.trips, true);
-        localStorage.setItem('smartbus_corridor_v1_seeded', 'true');
-        localStorage.setItem('smartbus_corridor_v2_seeded', 'true');
-        console.log('Seeded Nashik CBS ↔ Pimpalgaon Baswant corridor dataset with 31.0 km real-world distances');
+    // Ensure storage keys are initialized
+    [StorageKeys.STOPS, StorageKeys.BUSES, StorageKeys.ROUTES, StorageKeys.TRIPS].forEach(key => {
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, '[]');
       }
+    });
+
+    
+    // Ensure passenger storage is initialized
+    if (!localStorage.getItem(StorageKeys.PASSENGER_USERS)) {
+      const today = this.getTodayDateString();
+      const initialUsers = [
+        { id: '9822014521', mobile: '9822014521', registeredAt: new Date(Date.now() - 86400000*3).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 8 },
+        { id: '9423189210', mobile: '9423189210', registeredAt: new Date(Date.now() - 86400000*2).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 9 },
+        { id: '9158023194', mobile: '9158023194', registeredAt: new Date(Date.now() - 86400000*4).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 10 },
+        { id: '9890456123', mobile: '9890456123', registeredAt: new Date(Date.now() - 86400000).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 12 },
+        { id: '9021457812', mobile: '9021457812', registeredAt: new Date(Date.now() - 86400000*5).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 14 },
+        { id: '9823561289', mobile: '9823561289', registeredAt: new Date(Date.now() - 86400000*2).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 16 },
+        { id: '9764123890', mobile: '9764123890', registeredAt: new Date(Date.now() - 86400000*6).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 17 },
+        { id: '9403217895', mobile: '9403217895', registeredAt: new Date(Date.now() - 86400000*3).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 18 },
+        { id: '9822894512', mobile: '9822894512', registeredAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 19 },
+        { id: '9175462310', mobile: '9175462310', registeredAt: new Date(Date.now() - 86400000*4).toISOString(), lastLoginAt: new Date().toISOString(), lastLoginDate: today, lastLoginHour: 20 }
+      ];
+      localStorage.setItem(StorageKeys.PASSENGER_USERS, JSON.stringify(initialUsers));
+    }
+
+    if (!localStorage.getItem(StorageKeys.PASSENGER_LOGINS)) {
+      const today = this.getTodayDateString();
+      const initialLogins = [
+        { id: 'log_1', mobile: '9822014521', date: today, hour: 6, timestamp: new Date().toISOString() },
+        { id: 'log_2', mobile: '9423189210', date: today, hour: 8, timestamp: new Date().toISOString() },
+        { id: 'log_3', mobile: '9158023194', date: today, hour: 8, timestamp: new Date().toISOString() },
+        { id: 'log_4', mobile: '9890456123', date: today, hour: 10, timestamp: new Date().toISOString() },
+        { id: 'log_5', mobile: '9021457812', date: today, hour: 10, timestamp: new Date().toISOString() },
+        { id: 'log_6', mobile: '9823561289', date: today, hour: 12, timestamp: new Date().toISOString() },
+        { id: 'log_7', mobile: '9764123890', date: today, hour: 14, timestamp: new Date().toISOString() },
+        { id: 'log_8', mobile: '9403217895', date: today, hour: 16, timestamp: new Date().toISOString() },
+        { id: 'log_9', mobile: '9822894512', date: today, hour: 17, timestamp: new Date().toISOString() },
+        { id: 'log_10', mobile: '9175462310', date: today, hour: 18, timestamp: new Date().toISOString() },
+        { id: 'log_11', mobile: '9822014521', date: today, hour: 19, timestamp: new Date().toISOString() },
+        { id: 'log_12', mobile: '9423189210', date: today, hour: 20, timestamp: new Date().toISOString() }
+      ];
+      localStorage.setItem(StorageKeys.PASSENGER_LOGINS, JSON.stringify(initialLogins));
+    }
+
+    // If local cache is empty, pull live data from Firebase Firestore
+    const hasData = this.getStops().length > 0 && this.getRoutes().length > 0;
+    if (!hasData && typeof FirebaseService !== 'undefined' && FirebaseService.isConnected) {
+      FirebaseService.forcePullFromFirebase();
     }
   },
 
-  resetToCorridorData() {
-    if (typeof SmartBusCorridorData !== 'undefined') {
-      this.saveStops(SmartBusCorridorData.stops, true);
-      this.saveRoutes([SmartBusCorridorData.route], true);
-      this.saveBuses(SmartBusCorridorData.buses, true);
-      this.saveTrips(SmartBusCorridorData.trips, true);
-      localStorage.setItem('smartbus_corridor_v1_seeded', 'true');
-      return true;
+  syncFromCloud() {
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.isConnected) {
+      return FirebaseService.forcePullFromFirebase();
     }
     return false;
+  },
+
+  resetToCorridorData() {
+    return this.syncFromCloud();
   },
 
   getStops() {
@@ -197,6 +232,140 @@ const StorageService = {
       console.error('Error deleting trip:', e);
     }
   },
+  getTodayDateString() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  },
+
+  getPassengerUsers() {
+    try {
+      const stored = localStorage.getItem(StorageKeys.PASSENGER_USERS);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.error('Error reading passenger users:', e);
+    }
+    return [];
+  },
+
+  savePassengerUsers(users, syncToCloud = true) {
+    try {
+      localStorage.setItem(StorageKeys.PASSENGER_USERS, JSON.stringify(users));
+      window.dispatchEvent(new Event('smartbus_storage_updated'));
+      if (syncToCloud && typeof FirebaseService !== 'undefined' && FirebaseService.isConnected) {
+        FirebaseService.savePassengerUsers(users);
+      }
+    } catch (e) {
+      console.error('Error saving passenger users:', e);
+    }
+  },
+
+  getPassengerLogins() {
+    try {
+      const stored = localStorage.getItem(StorageKeys.PASSENGER_LOGINS);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.error('Error reading passenger logins:', e);
+    }
+    return [];
+  },
+
+  savePassengerLogins(logins, syncToCloud = true) {
+    try {
+      localStorage.setItem(StorageKeys.PASSENGER_LOGINS, JSON.stringify(logins));
+      window.dispatchEvent(new Event('smartbus_storage_updated'));
+      if (syncToCloud && typeof FirebaseService !== 'undefined' && FirebaseService.isConnected) {
+        FirebaseService.savePassengerLogins(logins);
+      }
+    } catch (e) {
+      console.error('Error saving passenger logins:', e);
+    }
+  },
+
+  getTotalUsersCount() {
+    const users = this.getPassengerUsers();
+    return users.length;
+  },
+
+  getTodayLoginsCount() {
+    const todayStr = this.getTodayDateString();
+    const logins = this.getPassengerLogins();
+    const todayList = logins.filter(l => l.date === todayStr);
+    return todayList.length;
+  },
+
+  getHourlyLoginsToday() {
+    const todayStr = this.getTodayDateString();
+    const logins = this.getPassengerLogins().filter(l => l.date === todayStr);
+    
+    // 9 buckets: 06:00, 08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00
+    const buckets = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    logins.forEach(l => {
+      let h = typeof l.hour === 'number' ? l.hour : (l.timestamp ? new Date(l.timestamp).getHours() : 8);
+      if (h <= 6) buckets[0]++;
+      else if (h <= 8) buckets[1]++;
+      else if (h <= 10) buckets[2]++;
+      else if (h <= 12) buckets[3]++;
+      else if (h <= 14) buckets[4]++;
+      else if (h <= 16) buckets[5]++;
+      else if (h <= 18) buckets[6]++;
+      else if (h <= 20) buckets[7]++;
+      else buckets[8]++;
+    });
+    return buckets;
+  },
+
+  recordPassengerLogin(mobile) {
+    if (!mobile || !/^\d{10}$/.test(String(mobile).trim())) return null;
+    mobile = String(mobile).trim();
+
+    const now = new Date();
+    const todayDateStr = this.getTodayDateString();
+    const currentHour = now.getHours();
+
+    // 1. Update unique user profile
+    const users = this.getPassengerUsers();
+    const existingIdx = users.findIndex(u => u.mobile === mobile);
+    const userDoc = {
+      id: mobile,
+      mobile,
+      registeredAt: existingIdx >= 0 ? users[existingIdx].registeredAt : now.toISOString(),
+      lastLoginAt: now.toISOString(),
+      lastLoginDate: todayDateStr,
+      lastLoginHour: currentHour
+    };
+
+    if (existingIdx >= 0) {
+      users[existingIdx] = userDoc;
+    } else {
+      users.unshift(userDoc);
+    }
+    this.savePassengerUsers(users, false);
+
+    // 2. Add event log for today
+    const logins = this.getPassengerLogins();
+    const loginRecord = {
+      id: `login_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      mobile,
+      date: todayDateStr,
+      hour: currentHour,
+      timestamp: now.toISOString()
+    };
+    logins.unshift(loginRecord);
+    if (logins.length > 500) logins.length = 500;
+    this.savePassengerLogins(logins, false);
+
+    // 3. Sync to Firebase Cloud Firestore
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.isConnected) {
+      FirebaseService.savePassengerUser(userDoc);
+      FirebaseService.recordPassengerLogin(loginRecord);
+    }
+
+    window.dispatchEvent(new Event('smartbus_storage_updated'));
+    return userDoc;
+  },
 
   applyCloudCollectionUpdate(colName, items) {
     try {
@@ -213,9 +382,12 @@ const StorageService = {
             r.roadGeometry = r.roadGeometry.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
           }
         });
-        localStorage.setItem(StorageKeys.ROUTES, JSON.stringify(items));
-      } else if (colName === 'trips') {
+        localStorage.setItem(StorageKeys.ROUTES, JSON.stringify(items));      } else if (colName === 'trips') {
         localStorage.setItem(StorageKeys.TRIPS, JSON.stringify(items));
+      } else if (colName === 'passenger_users') {
+        localStorage.setItem(StorageKeys.PASSENGER_USERS, JSON.stringify(items));
+      } else if (colName === 'passenger_logins') {
+        localStorage.setItem(StorageKeys.PASSENGER_LOGINS, JSON.stringify(items));
       }
       window.dispatchEvent(new Event('smartbus_storage_updated'));
     } catch (e) {

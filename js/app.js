@@ -379,6 +379,18 @@ function updateMap() {
   if (stopCountEl) {
     stopCountEl.textContent = AppState.stops.length > 0 ? `${AppState.stops.length} stop${AppState.stops.length === 1 ? '' : 's'} on map` : 'No stops configured';
   }
+  const fleetStatusEl = document.getElementById('map-fleet-status');
+  if (fleetStatusEl) {
+    const activeVehicles = getActiveBusesOnRoad().length;
+    fleetStatusEl.innerHTML = `
+      <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #102A43;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; display: inline-block;"></span> ${activeVehicles} Active En Route
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 4px; color: #627D98;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #0284C7; display: inline-block;"></span> ${AppState.buses.length} Fleet Total
+      </span>
+    `;
+  }
 }
 
 function getActiveBusesOnRoad() {
@@ -422,18 +434,6 @@ function renderStopSelector() {
     return;
   }
 
-  const CORRIDOR_HALTS_INFO = {
-    'stop-cbs':         { num: 'Halt #1', code: 'CBS-01', landmark: 'Central State Transport Terminus' },
-    'stop-nimani':      { num: 'Halt #2', code: 'NMN-02', landmark: 'Panchavati City Transit Hub' },
-    'stop-adgaon':      { num: 'Halt #3', code: 'ADG-03', landmark: 'NH-3 Highway Commercial Junction' },
-    'stop-amrutdham':   { num: 'Halt #4', code: 'AMT-04', landmark: 'Adgaon Residential Corridor Halt' },
-    'stop-bali-mandir': { num: 'Halt #5', code: 'BLM-05', landmark: 'Highway Landmark Station' },
-    'stop-jatra':       { num: 'Halt #6', code: 'JTR-06', landmark: 'Dwarka Bypass Flyover Interchange' },
-    'stop-juna-jakat':  { num: 'Halt #7', code: 'JJN-07', landmark: 'MET Bhujbal Knowledge City / Octroi' },
-    'stop-ojhar':       { num: 'Halt #8', code: 'OJH-08', landmark: 'HAL Aerospace Township & Highway Stand' },
-    'stop-pimpalgaon':  { num: 'Halt #9', code: 'PBW-09', landmark: 'APMC Market & Highway Bus Terminus' }
-  };
-
   AppState.stops.forEach((stop, idx) => {
     const opt = document.createElement('option');
     opt.value = stop.id;
@@ -445,16 +445,45 @@ function renderStopSelector() {
   });
 
   const selectedStop = AppState.stopsMap.get(AppState.selectedStopId);
+  const numEl = document.getElementById('stop-meta-num');
+  const codeEl = document.getElementById('stop-meta-code');
+  const nameEl = document.getElementById('stop-meta-name');
+  const landmarkEl = document.getElementById('stop-meta-landmark');
+  const corridorTag = document.getElementById('corridor-quick-tag');
+
   if (selectedStop) {
-    const meta = CORRIDOR_HALTS_INFO[selectedStop.id] || { num: `Halt #${selectedStop.sequenceOrder || 1}`, code: selectedStop.code || '', landmark: 'Highway Transit Stop' };
-    const numEl = document.getElementById('stop-meta-num');
-    const codeEl = document.getElementById('stop-meta-code');
-    const nameEl = document.getElementById('stop-meta-name');
-    const landmarkEl = document.getElementById('stop-meta-landmark');
-    if (numEl) numEl.textContent = meta.num;
-    if (codeEl) codeEl.textContent = meta.code;
+    const stopIndex = AppState.stops.findIndex(s => s.id === selectedStop.id);
+    const seqNum = selectedStop.sequenceOrder || (stopIndex >= 0 ? stopIndex + 1 : 1);
+    if (numEl) numEl.textContent = `Stop #${seqNum}`;
+    if (codeEl) codeEl.textContent = selectedStop.code || '--';
     if (nameEl) nameEl.textContent = selectedStop.name;
-    if (landmarkEl) landmarkEl.textContent = meta.landmark;
+    if (landmarkEl) landmarkEl.textContent = selectedStop.landmark || 'Transit Stop';
+
+    // Find routes that stop here
+    const servingRoutes = AppState.routes.filter(r => r.stops && r.stops.some(s => s.stopId === selectedStop.id));
+    if (corridorTag) {
+      if (servingRoutes.length > 0) {
+        const primaryRoute = servingRoutes[0];
+        corridorTag.style.display = 'block';
+        corridorTag.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-weight: 800; color: #102A43; font-size: 12px;">${primaryRoute.routeNumber ? `Route ${primaryRoute.routeNumber}` : primaryRoute.name}</span>
+            <span class="corridor-stat-pill">${primaryRoute.totalDistanceKm ? `${primaryRoute.totalDistanceKm} km` : `${servingRoutes.length} Route(s)`}</span>
+          </div>
+          <div style="font-size: 11px; color: #627D98; margin-top: 3px;">
+            ${primaryRoute.origin || 'Start'} &rarr; ${primaryRoute.destination || 'End'} &bull; ${(primaryRoute.stops && primaryRoute.stops.length) || 0} Halts
+          </div>
+        `;
+      } else {
+        corridorTag.style.display = 'none';
+      }
+    }
+  } else {
+    if (numEl) numEl.textContent = 'Stop';
+    if (codeEl) codeEl.textContent = '--';
+    if (nameEl) nameEl.textContent = 'No Stop Selected';
+    if (landmarkEl) landmarkEl.textContent = 'Transit Network';
+    if (corridorTag) corridorTag.style.display = 'none';
   }
 }
 
@@ -511,8 +540,8 @@ function renderBusList() {
   if (AppState.stops.length === 0) {
     listContainer.innerHTML = `
       <div class="empty-state">
-        <h4>No Transit Data Available</h4>
-        <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">Live transit schedules will appear here once active.</p>
+        <h4>Connecting to Database...</h4>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">Live transit schedules will appear here once connected to Firebase.</p>
       </div>
     `;
     return;
@@ -520,29 +549,15 @@ function renderBusList() {
 
   // Helper for operator badge markup with official transit fares
   const getOperatorBadgeHtml = (item) => {
-    const cat = item.category || 'msrtc';
-    if (cat === 'msrtc') {
-      return `
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-          <span class="operator-badge msrtc">MSRTC &bull; Lalpari Ordinary</span>
-          <span class="fare-chip">Fare: &#8377;22</span>
-        </div>
-      `;
-    } else if (cat === 'citilinc') {
-      return `
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-          <span class="operator-badge citilinc">Citilinc CNG Feeder (Every 20m)</span>
-          <span class="fare-chip">Fare: &#8377;15</span>
-        </div>
-      `;
-    } else {
-      return `
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-          <span class="operator-badge private">${item.operator || 'Private Intercity'}</span>
-          <span class="fare-chip">Fare: &#8377;45</span>
-        </div>
-      `;
-    }
+    const operatorName = item.bus?.operator || item.operator || (item.category ? item.category.toUpperCase() : 'Transit');
+    const categoryClass = (item.category || 'standard').toLowerCase();
+    const fareHtml = item.fare ? `<span class="fare-chip">Fare: &#8377;${item.fare}</span>` : '';
+    return `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+        <span class="operator-badge ${categoryClass}">${operatorName}</span>
+        ${fareHtml}
+      </div>
+    `;
   };
 
   // MODE 1: Next 20 Minutes Live ETA View
@@ -581,7 +596,7 @@ function renderBusList() {
       if (item.status === 'Arriving Soon') statusClass = 'soon';
       else if (item.status === 'Upcoming') statusClass = 'upcoming';
 
-      const chassisLabel = item.category === 'citilinc' ? 'Tata Marcopolo BS-VI CNG' : (item.category === 'msrtc' ? 'Ashok Leyland 210HP Viking' : 'Eicher Starline 32S');
+      const chassisLabel = item.bus?.model || item.bus?.busType || 'Transit Vehicle';
 
       card.innerHTML = `
         <div class="bus-card-top">
@@ -599,7 +614,7 @@ function renderBusList() {
         </div>
 
         <div class="bus-boarding-info" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-          <span>Bay: <b>${item.boardingPoint || 'Platform 2, CBS'}</b></span>
+          <span>Bay: <b>${item.boardingPoint || 'Platform 1'}</b></span>
           <span style="color: #627D98; font-size: 10.5px;">${chassisLabel}</span>
         </div>
 
@@ -637,29 +652,37 @@ function renderBusList() {
     });
 
   } else {
-    // MODE 2: All Trips View with Clean Corridor Summary & Category Filters
+    // MODE 2: All Trips View with Dynamic Route Summary & Category Filters
     const msrtcCount = allCorridorArrivals.filter(a => a.category === 'msrtc').length;
     const citilincCount = allCorridorArrivals.filter(a => a.category === 'citilinc').length;
     const pvtCount = allCorridorArrivals.filter(a => a.category === 'private').length;
 
-    // Corridor Summary Banner
+    // Dynamically derive route summary from the active route
+    const activeRoute = AppState.routes.find(r => r.stops && r.stops.some(s => s.stopId === AppState.selectedStopId)) || AppState.routes[0];
+    const routeNumBadge = activeRoute?.routeNumber ? `Route ${activeRoute.routeNumber}` : 'Transit Route';
+    const routeTitleText = activeRoute?.name || (activeRoute ? `${activeRoute.origin} ↔ ${activeRoute.destination}` : 'Active Transit Network');
+    const distText = activeRoute?.totalDistanceKm ? `${activeRoute.totalDistanceKm} km Corridor` : '';
+    const runtimeText = activeRoute?.baseDurationMinutes ? `${activeRoute.baseDurationMinutes} min runtime` : '';
+    const stopCountText = activeRoute?.stops ? `${activeRoute.stops.length} Stops` : `${AppState.stops.length} Stops`;
+
+    // Route Summary Banner
     const summaryBanner = document.createElement('div');
     summaryBanner.className = 'corridor-banner';
     summaryBanner.innerHTML = `
       <div class="corridor-banner-top">
         <div class="corridor-title-group">
-          <span class="corridor-num-badge">Route 501</span>
-          <span class="corridor-title">Nashik CBS &harr; Pimpalgaon Baswant</span>
+          <span class="corridor-num-badge">${routeNumBadge}</span>
+          <span class="corridor-title">${routeTitleText}</span>
         </div>
         <span style="font-size: 11.5px; font-weight: 700; color: #102A43;">Daily Timetable</span>
       </div>
       <div class="corridor-meta-pills">
-        <span class="corridor-stat-pill">31.0 km Highway</span>
-        <span class="corridor-stat-pill">50 min runtime</span>
-        <span class="corridor-stat-pill">9 Stops</span>
-        <span class="corridor-stat-pill">17 MSRTC Direct</span>
-        <span class="corridor-stat-pill">47 Citilinc Feeders (Every 20m)</span>
-        <span class="corridor-stat-pill">6 Private AC Sleepers</span>
+        ${distText ? `<span class="corridor-stat-pill">${distText}</span>` : ''}
+        ${runtimeText ? `<span class="corridor-stat-pill">${runtimeText}</span>` : ''}
+        <span class="corridor-stat-pill">${stopCountText}</span>
+        ${msrtcCount > 0 ? `<span class="corridor-stat-pill">${msrtcCount} MSRTC</span>` : ''}
+        ${citilincCount > 0 ? `<span class="corridor-stat-pill">${citilincCount} Citilinc</span>` : ''}
+        ${pvtCount > 0 ? `<span class="corridor-stat-pill">${pvtCount} Private</span>` : ''}
       </div>
     `;
     listContainer.appendChild(summaryBanner);
@@ -817,7 +840,7 @@ function openRouteModal(item) {
   if (titleEl) titleEl.textContent = `Route Details: ${item.bus.busNumber}`;
 
   const subtitleEl = document.getElementById('modal-bus-subtitle');
-  if (subtitleEl) subtitleEl.textContent = `${item.originStop.name} → ${item.destinationStop.name} (${item.operator || 'Corridor 501'})`;
+  if (subtitleEl) subtitleEl.textContent = `${item.originStop.name} → ${item.destinationStop.name} (${item.operator || item.route?.name || 'Transit'})`;
 
   document.getElementById('modal-segment-desc').textContent = item.location.currentSegmentDescription;
   document.getElementById('modal-prev-stop').textContent = item.location.previousStop ? item.location.previousStop.name : item.originStop.name;
@@ -871,6 +894,24 @@ function renderApp() {
 }
 
 // --- App Bootstrap ---
+function checkPassengerAuth() {
+  const modal = document.getElementById('passenger-login-modal');
+  const badge = document.getElementById('passenger-auth-badge');
+  const mobileDisplay = document.getElementById('passenger-mobile-display');
+  const savedMobile = localStorage.getItem('smartbus_passenger_mobile');
+
+  if (savedMobile && /^\d{10}$/.test(savedMobile)) {
+    if (badge) badge.style.display = 'inline-flex';
+    if (mobileDisplay) mobileDisplay.textContent = savedMobile;
+    if (modal) modal.classList.remove('open');
+  } else {
+    if (badge) badge.style.display = 'none';
+    if (modal) modal.classList.add('open');
+    const input = document.getElementById('input-passenger-mobile');
+    if (input) setTimeout(() => input.focus(), 150);
+  }
+}
+
 function initApp() {
   if (window.location.hash.toLowerCase().includes('admin')) {
     window.location.replace('admin.html');
@@ -957,6 +998,46 @@ function initApp() {
     renderBusList();
     updateMap();
   }, 1000);
+  // Passenger Mobile Login Form submission
+  const passengerForm = document.getElementById('passenger-login-form');
+  if (passengerForm) {
+    passengerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const mobileInput = document.getElementById('input-passenger-mobile');
+      const errorEl = document.getElementById('passenger-login-error');
+      const errorText = document.getElementById('passenger-login-error-text');
+      const mobile = (mobileInput?.value || '').trim();
+
+      if (!mobile || !/^\d{10}$/.test(mobile)) {
+        if (errorEl && errorText) {
+          errorText.textContent = 'Please enter a valid 10-digit mobile number.';
+          errorEl.style.display = 'flex';
+        }
+        mobileInput?.focus();
+        return;
+      }
+
+      if (errorEl) errorEl.style.display = 'none';
+      localStorage.setItem('smartbus_passenger_mobile', mobile);
+      StorageService.recordPassengerLogin(mobile);
+      checkPassengerAuth();
+    });
+  }
+
+  // Change Mobile button in navbar
+  const changeMobileBtn = document.getElementById('btn-change-mobile');
+  if (changeMobileBtn) {
+    changeMobileBtn.addEventListener('click', () => {
+      const modal = document.getElementById('passenger-login-modal');
+      const mobileInput = document.getElementById('input-passenger-mobile');
+      const currentMobile = localStorage.getItem('smartbus_passenger_mobile') || '';
+      if (mobileInput) mobileInput.value = currentMobile;
+      if (modal) modal.classList.add('open');
+      mobileInput?.focus();
+    });
+  }
+
+  checkPassengerAuth();
 
   renderApp();
 }

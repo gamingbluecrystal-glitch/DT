@@ -1,3 +1,26 @@
+/* --- SHARP RECTANGLES SYSTEM OVERRIDE --- */
+*, *::before, *::after {
+  border-radius: 0 !important;
+}
+.status-dot, .pill-dot, .badge-dot, .pulse-dot {
+  border-radius: 50% !important;
+}
+.stat-icon-badge {
+  display: none !important;
+}
+.admin-brand-icon {
+  display: none !important;
+}
+.admin-user-btn {
+  background: #1e3a5f;
+  color: #ffffff;
+  border: 1px solid #334e68;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: default;
+}
+
 /* SmartBus - Modern Pure CSS Design System */
 :root {
   --primary: #163653;
@@ -1537,6 +1560,8 @@ body {
 .admin-input-icon {
   position: absolute;
   left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #94A3B8;
   display: flex;
   align-items: center;
@@ -1565,6 +1590,8 @@ body {
 .admin-toggle-pwd {
   position: absolute;
   right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: #94A3B8;
@@ -1834,7 +1861,7 @@ body {
 .stat-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 14px;
 }
 
@@ -2822,6 +2849,18 @@ body {
   color: #102A43;
 }
 
+/* Passenger Auth Badge in Top Navbar */
+.passenger-auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+
 .status-tag.passed {
   background-color: #F1F5F9;
   color: #64748B;
@@ -3088,6 +3127,18 @@ body {
 .bus-boarding-info b {
   color: #102A43;
 }
+
+/* Passenger Auth Badge in Top Navbar */
+.passenger-auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
 
 
 

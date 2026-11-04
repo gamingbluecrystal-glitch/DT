@@ -64,7 +64,7 @@ const FirebaseService = {
   setupRealtimeListeners() {
     if (!this.db) return;
 
-    const collections = ['stops', 'buses', 'routes', 'trips'];
+    const collections = ['stops', 'buses', 'routes', 'trips', 'passenger_users', 'passenger_logins'];
 
     collections.forEach((colName) => {
       const unsub = this.db.collection(colName).onSnapshot(
@@ -121,6 +121,37 @@ const FirebaseService = {
 
   async saveTrips(trips) {
     return this.syncCollection('trips', trips);
+  },
+  async savePassengerUser(user) {
+    if (!this.db || !user || !user.mobile) return false;
+    try {
+      await this.db.collection('passenger_users').doc(user.mobile).set(user, { merge: true });
+      console.log('Firebase: Passenger user saved', user.mobile);
+      return true;
+    } catch (err) {
+      console.error('Firebase savePassengerUser error:', err);
+      return false;
+    }
+  },
+
+  async recordPassengerLogin(loginRecord) {
+    if (!this.db || !loginRecord || !loginRecord.id) return false;
+    try {
+      await this.db.collection('passenger_logins').doc(loginRecord.id).set(loginRecord);
+      console.log('Firebase: Passenger login recorded', loginRecord.mobile);
+      return true;
+    } catch (err) {
+      console.error('Firebase recordPassengerLogin error:', err);
+      return false;
+    }
+  },
+
+  async savePassengerUsers(users) {
+    return this.syncCollection('passenger_users', users);
+  },
+
+  async savePassengerLogins(logins) {
+    return this.syncCollection('passenger_logins', logins);
   },
 
   async syncCollection(collectionName, items) {
@@ -197,7 +228,7 @@ const FirebaseService = {
     if (!this.db) return false;
     this.isSyncingOutbound = true;
     try {
-      const collections = ['stops', 'buses', 'routes', 'trips'];
+      const collections = ['stops', 'buses', 'routes', 'trips', 'passenger_users', 'passenger_logins'];
       for (const col of collections) {
         const snap = await this.db.collection(col).get();
         const ops = [];
@@ -239,18 +270,26 @@ const FirebaseService = {
     if (!this.db) return false;
     try {
       this.updateStatusBadge(true, 'Downloading...');
-      const collections = ['stops', 'buses', 'routes', 'trips'];
+      const collections = ['stops', 'buses', 'routes', 'trips', 'passenger_users', 'passenger_logins'];
       for (const col of collections) {
         const snap = await this.db.collection(col).get();
         const items = [];
-        snap.forEach(d => items.push(d.data()));
+        snap.forEach(d => {
+          const data = d.data();
+          if (!data.id) data.id = d.id;
+          if (col === 'routes' && Array.isArray(data.roadGeometry)) {
+            data.roadGeometry = data.roadGeometry.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
+          }
+          items.push(data);
+        });
         StorageService.applyCloudCollectionUpdate(col, items);
       }
       window.dispatchEvent(new Event('smartbus_storage_updated'));
-      this.updateStatusBadge(true, 'Downloaded');
+      this.updateStatusBadge(true, 'Live Connected');
       return true;
     } catch (err) {
       console.error('Force pull from Firebase failed:', err);
+      this.updateStatusBadge(false, 'Sync Warning');
       return false;
     }
   }

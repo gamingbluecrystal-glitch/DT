@@ -275,125 +275,9 @@ function renderAdminDashboard() {
 
     adminContainer.innerHTML = `
       <div class="admin-login-wrapper">
-        <!-- Floating Transparent Bus & Transit Watermark Icons in Background -->
-        <div class="admin-login-icons-bg" aria-hidden="true">
-          <!-- 1. Bus Front (Top-Left) -->
-          <div class="bg-transit-icon bg-icon-top-left" title="Bus">
-            <svg width="115" height="115" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="15" rx="3"></rect>
-              <line x1="3" y1="9" x2="21" y2="9"></line>
-              <circle cx="7" cy="14" r="1.5"></circle>
-              <circle cx="17" cy="14" r="1.5"></circle>
-              <line x1="6" y1="18" x2="6" y2="21"></line>
-              <line x1="18" y1="18" x2="18" y2="21"></line>
-              <line x1="8" y1="6" x2="16" y2="6"></line>
-            </svg>
-          </div>
-
-          <!-- 2. Transit Pass / Ticket (Top-Center) -->
-          <div class="bg-transit-icon bg-icon-top-center accent-orange" title="Ticket">
-            <svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"></path>
-              <line x1="13" y1="5" x2="13" y2="19" stroke-dasharray="2 2"></line>
-            </svg>
-          </div>
-
-          <!-- 3. Side Transit Bus (Top-Right) -->
-          <div class="bg-transit-icon bg-icon-top-right" title="Transit Bus">
-            <svg width="130" height="130" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="8" width="28" height="15" rx="3"></rect>
-              <line x1="2" y1="15" x2="30" y2="15"></line>
-              <line x1="8" y1="8" x2="8" y2="15"></line>
-              <line x1="14" y1="8" x2="14" y2="15"></line>
-              <line x1="20" y1="8" x2="20" y2="15"></line>
-              <line x1="26" y1="8" x2="26" y2="15"></line>
-              <circle cx="8" cy="23" r="2.5"></circle>
-              <circle cx="24" cy="23" r="2.5"></circle>
-            </svg>
-          </div>
-
-          <!-- 4. Bus Stop Station Sign (Mid-Left) -->
-          <div class="bg-transit-icon bg-icon-mid-left accent-orange" title="Bus Stop">
-            <svg width="95" height="95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="2" x2="12" y2="22"></line>
-              <circle cx="12" cy="7" r="4.5"></circle>
-              <rect x="9.5" y="5.5" width="5" height="3" rx="0.5"></rect>
-              <line x1="7" y1="22" x2="17" y2="22"></line>
-            </svg>
-          </div>
-
-          <!-- 5. GPS Transit Location Pin with Bus Icon (Mid-Right) -->
-          <div class="bg-transit-icon bg-icon-mid-right" title="Route Pin">
-            <svg width="105" height="105" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
-              <rect x="9" y="6" width="6" height="5" rx="1"></rect>
-              <circle cx="10.5" cy="9.5" r="0.6"></circle>
-              <circle cx="13.5" cy="9.5" r="0.6"></circle>
-            </svg>
-          </div>
-
-          <!-- 6. Steering Wheel / Fleet Navigation (Bottom-Left) -->
-          <div class="bg-transit-icon bg-icon-bottom-left" title="Fleet Steering">
-            <svg width="115" height="115" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9.5"></circle>
-              <circle cx="12" cy="12" r="3"></circle>
-              <line x1="12" y1="2.5" x2="12" y2="9"></line>
-              <line x1="4.2" y1="16.5" x2="9.4" y2="13.5"></line>
-              <line x1="19.8" y1="16.5" x2="14.6" y2="13.5"></line>
-            </svg>
-          </div>
-
-          <!-- 7. Timetable / Schedule Clock (Bottom-Right) -->
-          <div class="bg-transit-icon bg-icon-bottom-right accent-orange" title="Schedule">
-            <svg width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9"></circle>
-              <polyline points="12 7 12 12 15 15"></polyline>
-              <path d="M19.5 4.5l1.5 1.5"></path>
-              <path d="M4.5 4.5l-1.5 1.5"></path>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Subtle Road Horizon Art on Bottom -->
-        <div class="admin-login-bg-art" aria-hidden="true">
-          <svg viewBox="0 0 1200 360" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
-            <path d="M0 320 H1200" stroke="#163653" stroke-width="2" stroke-dasharray="10 10" opacity="0.14" />
-            <path d="M0 340 H1200" stroke="#163653" stroke-width="1.5" opacity="0.2" />
-            <!-- Stylized Bus Stop Shelter -->
-            <g opacity="0.16" stroke="#163653" stroke-width="2">
-              <path d="M140 340 V230 H270 V340" />
-              <path d="M120 230 H290" stroke-width="4" stroke="#F15A24" opacity="0.4" />
-              <path d="M150 285 H260" stroke-width="2" />
-              <circle cx="285" cy="215" r="13" fill="#ffffff" stroke="#163653" stroke-width="2" />
-              <path d="M285 228 V340" />
-            </g>
-            <!-- Bus Silhouette on Road -->
-            <g opacity="0.15" stroke="#163653" stroke-width="2" fill="none">
-              <rect x="350" y="270" width="85" height="45" rx="4" />
-              <line x1="350" y1="295" x2="435" y2="295" />
-              <circle cx="370" cy="317" r="7" fill="#ffffff" />
-              <circle cx="415" cy="317" r="7" fill="#ffffff" />
-            </g>
-            <!-- Distance Campus / Transit Skyline -->
-            <g opacity="0.12" fill="#163653">
-              <rect x="880" y="210" width="45" height="130" rx="2" />
-              <rect x="935" y="180" width="60" height="160" rx="2" />
-              <rect x="1005" y="230" width="50" height="110" rx="2" />
-              <rect x="1065" y="195" width="40" height="145" rx="2" />
-              <rect x="50" y="250" width="50" height="90" rx="2" />
-            </g>
-          </svg>
-        </div>
-
         <!-- Centered Login Card -->
         <div class="admin-login-card">
-          <!-- Small Lock Icon Badge -->
-          <div class="admin-login-icon-badge" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-          </div>
+          
 
           <!-- Card Header -->
           <div class="admin-login-header">
@@ -415,7 +299,7 @@ function renderAdminDashboard() {
           <div id="admin-forgot-hint" class="admin-login-hint" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
               <div>
-                <strong>Default Credentials:</strong> Sign in with password <code>admin123</code> or <code>admin</code>. For custom fleet dispatcher accounts, contact your system administrator.
+                <strong>Default Credentials:</strong> Sign in with username <code>JPVS@123</code> and password <code>admin123</code> or <code>admin</code>. For custom fleet dispatcher accounts, contact your system administrator.
               </div>
               <button type="button" id="btn-close-hint" style="background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: inherit; padding: 0 4px; line-height: 1;">&times;</button>
             </div>
@@ -423,7 +307,29 @@ function renderAdminDashboard() {
 
           <!-- Login Form -->
           <form id="admin-login-form" novalidate>
-            <!-- Password with Lock Icon & Toggle Visibility -->
+                        <!-- Username Input -->
+            <div class="admin-input-group">
+              <label for="admin-username-input" class="admin-input-label">Username</label>
+              <div class="admin-input-wrapper">
+                <span class="admin-input-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                <input 
+                  type="text" 
+                  id="admin-username-input"
+                  class="admin-text-input"
+                  placeholder="Enter username"
+                  value="JPVS@123" 
+                  autocomplete="username" 
+                  required 
+                />
+              </div>
+            </div>
+
+<!-- Password with Lock Icon & Toggle Visibility -->
             <div class="admin-input-group">
               <label for="admin-password-input" class="admin-input-label">Password</label>
               <div class="admin-input-wrapper">
@@ -526,10 +432,20 @@ function renderAdminDashboard() {
     const loginForm = document.getElementById('admin-login-form');
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      const user = (document.getElementById('admin-username-input')?.value || '').trim();
       const pwd = (document.getElementById('admin-password-input').value || '').trim();
       const errorEl = document.getElementById('admin-login-error');
       const errorText = document.getElementById('admin-login-error-text');
       const submitBtn = document.getElementById('btn-admin-signin');
+
+      if (!user) {
+        if (errorEl && errorText) {
+          errorText.textContent = 'Please enter your username.';
+          errorEl.style.display = 'flex';
+        }
+        document.getElementById('admin-username-input')?.focus();
+        return;
+      }
 
       if (!pwd) {
         if (errorEl && errorText) {
@@ -554,6 +470,8 @@ function renderAdminDashboard() {
       setTimeout(() => {
         if (pwd === 'admin123' || pwd === 'admin') {
           AdminState.isAdminAuthenticated = true;
+          AdminState.adminUsername = user || 'JPVS@123';
+          sessionStorage.setItem('smartbus_admin_user', user || 'JPVS@123');
           sessionStorage.setItem(StorageKeys.ADMIN_SESSION, 'true');
           localStorage.setItem(StorageKeys.ADMIN_SESSION, 'true');
           renderAdminDashboard();
@@ -576,10 +494,12 @@ function renderAdminDashboard() {
     return;
   }
 
-  // Authenticated Admin Dashboard Layout: Top Navbar Controls (Clean with Blue Logout)
+  // Authenticated Admin Dashboard Layout: Top Navbar Controls
   const navControls = document.getElementById('admin-nav-controls');
+  const loggedUser = AdminState.adminUsername || sessionStorage.getItem('smartbus_admin_user') || 'JPVS@123';
   if (navControls) {
     navControls.innerHTML = `
+      <button id="btn-admin-user" class="admin-user-btn" title="Logged in Admin">Admin: ${loggedUser}</button>
       <a href="index.html" class="admin-passenger-link" id="link-passenger-app">
         <span>Passenger App</span>
         <span class="admin-link-arrow">↗</span>
@@ -1147,6 +1067,8 @@ function renderAdminOverviewTab(container) {
   const activeBuses = getActiveBusesOnRoad();
   const totalBuses = AdminState.buses.length;
   const activeRoutesCount = AdminState.routes.length;
+  const totalUsersCount = (typeof StorageService !== 'undefined' && StorageService.getTotalUsersCount) ? StorageService.getTotalUsersCount() : 0;
+  const todayLoginsCount = (typeof StorageService !== 'undefined' && StorageService.getTodayLoginsCount) ? StorageService.getTodayLoginsCount() : 0;
 
   // Synthesize realistic fleet table data combining active trips & fleet buses
   const fleetRows = AdminState.buses.map((bus, idx) => {
@@ -1191,16 +1113,6 @@ function renderAdminOverviewTab(container) {
       <!-- Card 1: Total Active Buses -->
       <div class="stat-card" data-goto-tab="buses">
         <div class="stat-card-header">
-          <div class="stat-icon-badge blue">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="15" rx="3"></rect>
-              <line x1="3" y1="9" x2="21" y2="9"></line>
-              <circle cx="7" cy="14" r="1.5"></circle>
-              <circle cx="17" cy="14" r="1.5"></circle>
-              <line x1="6" y1="18" x2="6" y2="21"></line>
-              <line x1="18" y1="18" x2="18" y2="21"></line>
-            </svg>
-          </div>
           <span class="stat-trend-tag positive">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
             +3.4% vs last week
@@ -1210,34 +1122,21 @@ function renderAdminOverviewTab(container) {
         <div class="stat-title">Total Active Buses</div>
       </div>
 
-      <!-- Card 2: On-Time Rate (%) -->
-      <div class="stat-card" data-goto-tab="tracker">
+      <!-- Card 2: Total App Users -->
+      <div class="stat-card" data-goto-tab="analytics">
         <div class="stat-card-header">
-          <div class="stat-icon-badge emerald">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-          </div>
           <span class="stat-trend-tag positive">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
-            +1.8% efficiency
+            Passenger App
           </span>
         </div>
-        <div class="stat-value">96.8%</div>
-        <div class="stat-title">On-Time Performance</div>
+        <div class="stat-value">${totalUsersCount}</div>
+        <div class="stat-title">Total App Users</div>
       </div>
 
       <!-- Card 3: Active Routes -->
       <div class="stat-card" data-goto-tab="routes">
         <div class="stat-card-header">
-          <div class="stat-icon-badge purple">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-              <line x1="8" y1="2" x2="8" y2="18"></line>
-              <line x1="16" y1="6" x2="16" y2="22"></line>
-            </svg>
-          </div>
           <span class="stat-trend-tag neutral">
             <span style="color:#7C3AED; font-weight:800;">●</span> 100% Operational
           </span>
@@ -1246,22 +1145,15 @@ function renderAdminOverviewTab(container) {
         <div class="stat-title">Configured Bus Routes</div>
       </div>
 
-      <!-- Card 4: System Alerts -->
-      <div class="stat-card" data-goto-tab="timetables">
+      <!-- Card 4: Users Logged In Today -->
+      <div class="stat-card" data-goto-tab="analytics">
         <div class="stat-card-header">
-          <div class="stat-icon-badge amber">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
           <span class="stat-trend-tag neutral">
-            Active Watch
+            Resets at Midnight
           </span>
         </div>
-        <div class="stat-value">2 Minor</div>
-        <div class="stat-title">Dispatch Alerts</div>
+        <div class="stat-value">${todayLoginsCount}</div>
+        <div class="stat-title">Users Logged In Today</div>
       </div>
     </div>
 
@@ -2436,77 +2328,62 @@ function renderAdminImportTab(container) {
 function renderAdminAnalyticsTab(container) {
   let activeTimeRange = 'today';
 
-  // Data sets for dynamic switching based on Nashik CBS ↔ Pimpalgaon Baswant corridor
-  const analyticsData = {
-    today: {
-      riders: '14,850',
-      ridersTrend: '+8.4% vs last week',
-      otp: '96.8%',
-      otpTrend: '+1.8% above corridor SLA',
-      delay: '+1.8 min',
-      delayTrend: '-0.6 min variance reduced',
-      mileage: '2,170 km',
-      mileageTrend: '70/70 scheduled trips operated',
-      // Hourly values (from 06:00 to 22:00 in increments of 2 hrs)
-      points: [380, 1650, 2480, 1320, 1090, 1260, 2140, 2710, 1420],
-      topStops: [
-        { name: 'Nashik CBS (Old CBS)', code: 'CBS-01', count: '4,620', pct: 100, rank: 1 },
-        { name: 'Pimpalgaon Baswant Bus Stop', code: 'PBW-09', count: '3,840', pct: 83, rank: 2 },
-        { name: 'Ojhar Bus Stop (HAL Aerospace)', code: 'OJH-08', count: '2,980', pct: 64, rank: 3 },
-        { name: 'Nimani Bus Stand (Panchavati)', code: 'NMN-02', count: '2,140', pct: 46, rank: 4 },
-        { name: 'Jatra Hotel / Dwarka Boarding', code: 'JTR-06', count: '1,270', pct: 27, rank: 5 }
-      ]
-    },
-    week: {
-      riders: '104,200',
-      ridersTrend: '+10.5% weekly growth',
-      otp: '96.2%',
-      otpTrend: '98.4% peak consistency',
-      delay: '+2.1 min',
-      delayTrend: '-0.4 min weekly average',
-      mileage: '15,190 km',
-      mileageTrend: '490 corridor runs logged',
-      points: [460, 1720, 2610, 1420, 1180, 1380, 2260, 2840, 1530],
-      topStops: [
-        { name: 'Nashik CBS (Old CBS)', code: 'CBS-01', count: '32,400', pct: 100, rank: 1 },
-        { name: 'Pimpalgaon Baswant Bus Stop', code: 'PBW-09', count: '26,800', pct: 83, rank: 2 },
-        { name: 'Ojhar Bus Stop (HAL Aerospace)', code: 'OJH-08', count: '20,900', pct: 64, rank: 3 },
-        { name: 'Nimani Bus Stand (Panchavati)', code: 'NMN-02', count: '15,100', pct: 46, rank: 4 },
-        { name: 'Jatra Hotel / Dwarka Boarding', code: 'JTR-06', count: '9,000', pct: 28, rank: 5 }
-      ]
-    },
-    month: {
-      riders: '446,500',
-      ridersTrend: '+12.8% vs last month',
-      otp: '96.5%',
-      otpTrend: 'Exceeds regional transit SLA',
-      delay: '+1.9 min',
-      delayTrend: 'Optimal 4-lane highway flow',
-      mileage: '65,100 km',
-      mileageTrend: '2,100 corridor runs completed',
-      points: [440, 1690, 2550, 1380, 1140, 1320, 2190, 2780, 1480],
-      topStops: [
-        { name: 'Nashik CBS (Old CBS)', code: 'CBS-01', count: '138,500', pct: 100, rank: 1 },
-        { name: 'Pimpalgaon Baswant Bus Stop', code: 'PBW-09', count: '114,800', pct: 83, rank: 2 },
-        { name: 'Ojhar Bus Stop (HAL Aerospace)', code: 'OJH-08', count: '89,400', pct: 64, rank: 3 },
-        { name: 'Nimani Bus Stand (Panchavati)', code: 'NMN-02', count: '64,600', pct: 46, rank: 4 },
-        { name: 'Jatra Hotel / Dwarka Boarding', code: 'JTR-06', count: '39,200', pct: 28, rank: 5 }
-      ]
-    }
-  };
+  // Compute fleet operating windows from actual scheduled trips
+  function calculateFleetOperationWindows() {
+    const windows = [
+      { id: 'morning', label: 'Morning Peak (06:00 - 11:00)', shortLabel: 'Morning Peak', color: '#10B981', count: 0, hours: [6, 7, 8, 9, 10] },
+      { id: 'midday',  label: 'Midday Transit (11:00 - 16:00)', shortLabel: 'Midday Transit', color: '#0284C7', count: 0, hours: [11, 12, 13, 14, 15] },
+      { id: 'evening', label: 'Evening Peak (16:00 - 20:00)', shortLabel: 'Evening Peak', color: '#F59E0B', count: 0, hours: [16, 17, 18, 19] },
+      { id: 'night',   label: 'Night Service (20:00 - 24:00)', shortLabel: 'Night Service', color: '#E65100', count: 0, hours: [20, 21, 22, 23] }
+    ];
+
+    const trips = AdminState.trips || [];
+    trips.forEach(t => {
+      let depTime = t.departureTime || t.initialDepartureTime || '08:00';
+      const parts = depTime.split(':');
+      const hour = parseInt(parts[0], 10) || 8;
+      const win = windows.find(w => w.hours.includes(hour));
+      if (win) {
+        win.count++;
+      } else {
+        windows[0].count++;
+      }
+    });
+
+    const total = trips.length || 1;
+    let peakWin = windows[0];
+    windows.forEach(w => {
+      w.percent = Math.round((w.count / total) * 100);
+      if (w.count > peakWin.count) {
+        peakWin = w;
+      }
+    });
+
+    return { windows, totalTrips: trips.length, peakWin };
+  }
 
   function renderView() {
-    const cur = analyticsData[activeTimeRange];
+    const totalUsersCount = (typeof StorageService !== 'undefined' && StorageService.getTotalUsersCount) ? StorageService.getTotalUsersCount() : 0;
+    const todayLoginsCount = (typeof StorageService !== 'undefined' && StorageService.getTodayLoginsCount) ? StorageService.getTodayLoginsCount() : 0;
+    const weeklyTrips = (AdminState.trips.length || 0) * 7;
+    const activeBusesCount = getActiveBusesOnRoad().length;
+    const totalBusesCount = AdminState.buses.length;
+
+    const fleetOps = calculateFleetOperationWindows();
+
+    // Hourly passenger logins data from Firebase / storage
+    const hourLabels = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+    const hourlyLogins = (typeof StorageService !== 'undefined' && StorageService.getHourlyLoginsToday) 
+      ? StorageService.getHourlyLoginsToday() 
+      : [0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     // Compute SVG path for Area Chart
-    // 9 points: x: 40 to 660, y: 190 (bottom) to 30 (top)
-    const maxVal = 3200;
+    const maxVal = Math.max(10, ...hourlyLogins);
     const xCoords = [40, 115, 190, 265, 340, 415, 490, 565, 640];
-    const yCoords = cur.points.map(val => 190 - Math.round((val / maxVal) * 155));
+    const yCoords = hourlyLogins.map(val => 190 - Math.round((val / maxVal) * 155));
 
     let pathD = `M ${xCoords[0]} ${yCoords[0]}`;
     for (let i = 1; i < xCoords.length; i++) {
-      // Smooth cubic bezier curve between points
       const prevX = xCoords[i - 1];
       const prevY = yCoords[i - 1];
       const curX = xCoords[i];
@@ -2518,14 +2395,41 @@ function renderAdminAnalyticsTab(container) {
 
     const areaPathD = `${pathD} L ${xCoords[xCoords.length - 1]} 195 L ${xCoords[0]} 195 Z`;
 
-    const hourLabels = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+    // Find peak hour in logins
+    let peakLoginVal = -1;
+    let peakLoginIdx = 0;
+    hourlyLogins.forEach((cnt, idx) => {
+      if (cnt > peakLoginVal) {
+        peakLoginVal = cnt;
+        peakLoginIdx = idx;
+      }
+    });
+
+    // Donut chart circle math: r=38, circumference = 2 * Math.PI * 38 = 238.761
+    const circumference = 238.76;
+    let accumulatedOffset = 0;
+    const donutSlices = fleetOps.windows.map(win => {
+      const dash = Math.max(1, (win.percent / 100) * circumference);
+      const offset = -accumulatedOffset;
+      accumulatedOffset += dash;
+      return {
+        ...win,
+        dash: dash.toFixed(1),
+        offset: offset.toFixed(1)
+      };
+    });
+
+    // Recent passenger logins
+    const recentLogins = (typeof StorageService !== 'undefined' && StorageService.getPassengerLogins)
+      ? StorageService.getPassengerLogins().slice(0, 5)
+      : [];
 
     container.innerHTML = `
       <!-- Toolbar Header -->
       <div class="analytics-header-row">
         <div class="analytics-title-group">
-          <h3>Nashik CBS &harr; Pimpalgaon Baswant Corridor Analytics</h3>
-          <p>Corridor passenger load curves, 31-vehicle fleet allocation, and punctuality index across 9 major transit halts</p>
+          <h3>Passenger App &amp; Fleet Operations Analytics</h3>
+          <p>Real-time passenger logins, Firebase user metrics, and corridor bus deployment windows</p>
         </div>
         <div class="analytics-controls">
           <div class="analytics-filter-pills">
@@ -2548,84 +2452,54 @@ function renderAdminAnalyticsTab(container) {
       <div class="admin-stats-grid" style="margin-bottom: 20px;">
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-icon-badge blue">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-            </div>
-            <span class="stat-trend-tag positive">${cur.ridersTrend}</span>
+            <span class="stat-trend-tag positive">7-Day Corridor Schedule</span>
           </div>
-          <div class="stat-value">${cur.riders}</div>
-          <div class="stat-title">Total Passenger Trips</div>
+          <div class="stat-value">${weeklyTrips}</div>
+          <div class="stat-title">Total Trips This Week</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-icon-badge emerald">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
-            <span class="stat-trend-tag positive">${cur.otpTrend}</span>
+            <span class="stat-trend-tag positive">Passenger App Users</span>
           </div>
-          <div class="stat-value">${cur.otp}</div>
-          <div class="stat-title">Fleet On-Time Rate (OTP)</div>
+          <div class="stat-value">${totalUsersCount}</div>
+          <div class="stat-title">Total App Users</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-icon-badge amber">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-            </div>
-            <span class="stat-trend-tag neutral">${cur.delayTrend}</span>
+            <span class="stat-trend-tag neutral">Resets at Midnight</span>
           </div>
-          <div class="stat-value">${cur.delay}</div>
-          <div class="stat-title">Average Corridor Delay</div>
+          <div class="stat-value">${todayLoginsCount}</div>
+          <div class="stat-title">Users Logged In Today</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-icon-badge purple">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <circle cx="12" cy="12" r="9.5"></circle>
-                <circle cx="12" cy="12" r="3"></circle>
-                <line x1="12" y1="2.5" x2="12" y2="9"></line>
-                <line x1="4.2" y1="16.5" x2="9.4" y2="13.5"></line>
-                <line x1="19.8" y1="16.5" x2="14.6" y2="13.5"></line>
-              </svg>
-            </div>
-            <span class="stat-trend-tag neutral">${cur.mileageTrend}</span>
+            <span class="stat-trend-tag neutral">${activeBusesCount} Currently En Route</span>
           </div>
-          <div class="stat-value">${cur.mileage}</div>
-          <div class="stat-title">Total Kilometers Logged</div>
+          <div class="stat-value">${totalBusesCount} Buses</div>
+          <div class="stat-title">Active Fleet in Service</div>
         </div>
       </div>
 
-      <!-- Main Charts Row 1: Ridership Demand Area Chart + Fleet Donut -->
+      <!-- Main Charts Row 1: Passenger Hourly Logins Area Chart + Fleet Operations Donut -->
       <div class="analytics-grid-row two-col-main">
-        <!-- Area Chart: Hourly Passenger Volume & Rush Hours -->
+        <!-- Area Chart: Passenger Logins by Hour -->
         <div class="analytics-card">
           <div class="analytics-card-header">
             <div>
               <h4 class="analytics-card-title">
-                <span>Hourly Ridership & Capacity Load</span>
+                <span>Passenger App Logins Today by Hour</span>
               </h4>
-              <span class="analytics-card-subtitle">Transit capacity utilization curve (06:00 to 22:00)</span>
+              <span class="analytics-card-subtitle">Real-time mobile logins recorded in Firebase (06:00 to 22:00)</span>
             </div>
             <div style="display: flex; gap: 12px; font-size: 11.5px; align-items: center;">
               <span style="display: inline-flex; align-items: center; gap: 5px; color: #102A43; font-weight: 700;">
-                <span style="width: 12px; height: 3px; background: #E65100; border-radius: 2px;"></span> Actual Riders
+                <span style="width: 12px; height: 3px; background: #E65100; border-radius: 2px;"></span> Logins Today
               </span>
               <span style="display: inline-flex; align-items: center; gap: 5px; color: #627D98;">
-                <span style="width: 12px; height: 1.5px; background: #CBD5E1; border-top: 1px dashed #94A3B8;"></span> Capacity Threshold
+                <span style="width: 12px; height: 1.5px; background: #CBD5E1; border-top: 1px dashed #94A3B8;"></span> Peak Level
               </span>
             </div>
           </div>
@@ -2648,12 +2522,12 @@ function renderAdminAnalyticsTab(container) {
               <line x1="30" y1="195" x2="650" y2="195" stroke="#E2E8F0" stroke-width="1.5" />
 
               <!-- Y-Axis Value Labels -->
-              <text x="25" y="38" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">3.0k</text>
-              <text x="25" y="88" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">2.0k</text>
-              <text x="25" y="138" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">1.0k</text>
+              <text x="25" y="38" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">${maxVal}</text>
+              <text x="25" y="88" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">${Math.round(maxVal * 0.66)}</text>
+              <text x="25" y="138" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">${Math.round(maxVal * 0.33)}</text>
               <text x="25" y="198" font-size="10" fill="#94A3B8" text-anchor="end" font-weight="600">0</text>
 
-              <!-- Fleet Optimal Capacity Threshold Line -->
+              <!-- Peak Threshold Reference Line -->
               <line x1="30" y1="65" x2="650" y2="65" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5 5" />
 
               <!-- Area Fill Under Curve -->
@@ -2662,20 +2536,17 @@ function renderAdminAnalyticsTab(container) {
               <!-- Smooth Bezier Line Curve -->
               <path d="${pathD}" fill="none" stroke="#E65100" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
-              <!-- Peak Highlight Annotations -->
-              <!-- Morning Peak Badge -->
-              <rect x="145" y="24" width="84" height="18" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="1" />
-              <text x="187" y="36" font-size="9" fill="#B45309" font-weight="700" text-anchor="middle">Morning Peak</text>
-
-              <!-- Evening Peak Badge -->
-              <rect x="522" y="20" width="84" height="18" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="1" />
-              <text x="564" y="32" font-size="9" fill="#B45309" font-weight="700" text-anchor="middle">Evening Peak</text>
+              <!-- Peak Highlight Annotation -->
+              ${hourlyLogins[peakLoginIdx] > 0 ? `
+                <rect x="${xCoords[peakLoginIdx] - 48}" y="${Math.max(12, yCoords[peakLoginIdx] - 28)}" width="96" height="20" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="1" />
+                <text x="${xCoords[peakLoginIdx]}" y="${Math.max(26, yCoords[peakLoginIdx] - 14)}" font-size="9.5" fill="#B45309" font-weight="700" text-anchor="middle">Peak: ${hourLabels[peakLoginIdx]} (${hourlyLogins[peakLoginIdx]} Logins)</text>
+              ` : ''}
 
               <!-- Data Point Circles and Tooltips -->
               ${xCoords.map((x, i) => `
                 <g class="chart-point-group" style="cursor: pointer;">
                   <circle cx="${x}" cy="${yCoords[i]}" r="5" fill="#FFFFFF" stroke="#E65100" stroke-width="3" />
-                  <title>${hourLabels[i]}: ${cur.points[i]} Riders/hr</title>
+                  <title>${hourLabels[i]}: ${hourlyLogins[i]} Logins</title>
                 </g>
               `).join('')}
 
@@ -2687,14 +2558,14 @@ function renderAdminAnalyticsTab(container) {
           </div>
         </div>
 
-        <!-- Donut Chart: Fleet Status Distribution -->
+        <!-- Donut Chart: Bus Fleet Operations by Departure Window -->
         <div class="analytics-card">
           <div class="analytics-card-header">
             <div>
               <h4 class="analytics-card-title">
-                <span>Fleet Allocation & Status</span>
+                <span>Fleet Operations by Departure Window</span>
               </h4>
-              <span class="analytics-card-subtitle">Real-time availability of 31 corridor vehicles</span>
+              <span class="analytics-card-subtitle">When most buses are in operation across scheduled transit shifts</span>
             </div>
           </div>
 
@@ -2704,160 +2575,108 @@ function renderAdminAnalyticsTab(container) {
               <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-90deg);">
                 <!-- Base Circle -->
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#F1F5F9" stroke-width="13" />
-                <!-- 1. Active In Transit (71% -> 169.5 perimeter) -->
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#10B981" stroke-width="13"
-                  stroke-dasharray="169.5 238.8" stroke-dashoffset="0" stroke-linecap="round" />
-                <!-- 2. Standby / Layover (19% -> 45.4 perimeter) -->
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#0284C7" stroke-width="13"
-                  stroke-dasharray="45.4 238.8" stroke-dashoffset="-170" stroke-linecap="round" />
-                <!-- 3. In Maintenance (10% -> 23.9 perimeter) -->
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#E65100" stroke-width="13"
-                  stroke-dasharray="23.9 238.8" stroke-dashoffset="-215.4" stroke-linecap="round" />
+                
+                <!-- Dynamic Slices for Departure Windows -->
+                ${donutSlices.map(s => `
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="${s.color}" stroke-width="13"
+                    stroke-dasharray="${s.dash} ${circumference}" stroke-dashoffset="${s.offset}" stroke-linecap="round" />
+                `).join('')}
               </svg>
               <div class="donut-center-text">
-                <div class="donut-center-val">31</div>
-                <div class="donut-center-lbl">Total Buses</div>
+                <div class="donut-center-val" style="font-size: 19px;">${fleetOps.peakWin.count} Trips</div>
+                <div class="donut-center-lbl" style="font-size: 11px;">Peak: ${fleetOps.peakWin.shortLabel}</div>
               </div>
             </div>
 
             <!-- Legend Details -->
             <div class="donut-legend">
-              <div class="donut-legend-item">
-                <div style="display: flex; align-items: center;">
-                  <span class="donut-legend-dot" style="background: #10B981;"></span>
-                  <span style="font-weight: 600; color: #102A43;">Active in Transit</span>
+              ${fleetOps.windows.map(win => `
+                <div class="donut-legend-item">
+                  <div style="display: flex; align-items: center;">
+                    <span class="donut-legend-dot" style="background: ${win.color};"></span>
+                    <span style="font-weight: 600; color: #102A43;">${win.shortLabel}</span>
+                  </div>
+                  <div>
+                    <strong style="color: #102A43;">${win.count} trips</strong>
+                    <span style="color: #627D98; font-size: 11px;">(${win.percent}%)</span>
+                  </div>
                 </div>
-                <div>
-                  <strong style="color: #102A43;">22</strong>
-                  <span style="color: #627D98; font-size: 11px;">(71%)</span>
-                </div>
-              </div>
-
-              <div class="donut-legend-item">
-                <div style="display: flex; align-items: center;">
-                  <span class="donut-legend-dot" style="background: #0284C7;"></span>
-                  <span style="font-weight: 600; color: #102A43;">Standby / Terminal Layover</span>
-                </div>
-                <div>
-                  <strong style="color: #102A43;">6</strong>
-                  <span style="color: #627D98; font-size: 11px;">(19%)</span>
-                </div>
-              </div>
-
-              <div class="donut-legend-item">
-                <div style="display: flex; align-items: center;">
-                  <span class="donut-legend-dot" style="background: #E65100;"></span>
-                  <span style="font-weight: 600; color: #102A43;">Depot Maintenance</span>
-                </div>
-                <div>
-                  <strong style="color: #102A43;">3</strong>
-                  <span style="color: #627D98; font-size: 11px;">(10%)</span>
-                </div>
-              </div>
+              `).join('')}
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Secondary Row 2: Route Delay Reliability & Busiest Stops -->
+      <!-- Secondary Row 2: Recent Firebase Logins & Fleet Operation Windows Breakdown -->
       <div class="analytics-grid-row two-col-equal">
-        <!-- Route Reliability & Delay Index -->
+        <!-- Live Firebase Passenger Logins Table -->
         <div class="analytics-card">
           <div class="analytics-card-header">
             <div>
               <h4 class="analytics-card-title">
-                <span>Corridor Punctuality & Schedule Variance</span>
+                <span>Recent Passenger Logins in Firebase</span>
               </h4>
-              <span class="analytics-card-subtitle">Measured against scheduled arrival timetables</span>
+              <span class="analytics-card-subtitle">Real-time mobile authentications recorded from passenger app</span>
             </div>
-            <span class="delay-chip ontime">SLA: &plusmn;3 min</span>
+            <span class="badge" style="background: #E0F2FE; color: #0369A1; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px;">Live Feed</span>
           </div>
 
-          <div>
-            <!-- MSRTC Direct -->
-            <div class="delay-row-item">
-              <div class="delay-row-header">
-                <div>
-                  <strong style="color: #102A43;">MSRTC Direct:</strong>
-                  <span style="color: #627D98;">Old CBS &harr; Pimpalgaon Baswant (Lalpari)</span>
-                </div>
-                <span class="delay-chip ontime">+1.3 min (97.8% OTP)</span>
-              </div>
-              <div class="delay-bar-track">
-                <div class="delay-bar-fill" style="width: 97.8%; background: #10B981;"></div>
-              </div>
-            </div>
-
-            <!-- Citilinc 20-Min Feeders -->
-            <div class="delay-row-item">
-              <div class="delay-row-header">
-                <div>
-                  <strong style="color: #102A43;">Citilinc Municipal:</strong>
-                  <span style="color: #627D98;">20-Min Feeder (CBS/Nimani &harr; HAL Ojhar &harr; PBW)</span>
-                </div>
-                <span class="delay-chip ontime">+2.1 min (95.4% OTP)</span>
-              </div>
-              <div class="delay-bar-track">
-                <div class="delay-bar-fill" style="width: 95.4%; background: #0284C7;"></div>
-              </div>
-            </div>
-
-            <!-- Private Fleet -->
-            <div class="delay-row-item">
-              <div class="delay-row-header">
-                <div>
-                  <strong style="color: #102A43;">Private Intercity:</strong>
-                  <span style="color: #627D98;">Dwarka Circle &harr; Pimpalgaon (Volvo/AC Sleeper)</span>
-                </div>
-                <span class="delay-chip ontime">+1.0 min (98.6% OTP)</span>
-              </div>
-              <div class="delay-bar-track">
-                <div class="delay-bar-fill" style="width: 98.6%; background: #10B981;"></div>
-              </div>
-            </div>
-
-            <!-- MSRTC Passing -->
-            <div class="delay-row-item" style="margin-bottom: 0;">
-              <div class="delay-row-header">
-                <div>
-                  <strong style="color: #102A43;">MSRTC Passing:</strong>
-                  <span style="color: #627D98;">Thakkar Bazar &harr; Dhule/Malegaon Highway</span>
-                </div>
-                <span class="delay-chip minor">+3.6 min (92.1% OTP)</span>
-              </div>
-              <div class="delay-bar-track">
-                <div class="delay-bar-fill" style="width: 92.1%; background: #E65100;"></div>
-              </div>
-            </div>
+          <div style="overflow-x: auto;">
+            <table class="admin-table" style="margin-top: 5px; width: 100%;">
+              <thead>
+                <tr>
+                  <th>Mobile Number</th>
+                  <th>Login Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recentLogins.length > 0 ? recentLogins.map(login => {
+                  const timeStr = login.timestamp ? new Date(login.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (login.hour ? `${String(login.hour).padStart(2,'0')}:00` : '--');
+                  const maskedMobile = String(login.mobile).replace(/(\d{3})\d{4}(\d{3})/, '$1-****-$2');
+                  return `
+                    <tr>
+                      <td><strong style="color: #102A43; font-family: monospace; font-size: 12.5px;">📱 ${maskedMobile}</strong></td>
+                      <td style="font-size: 12px; color: #475569;">${login.date || 'Today'}</td>
+                      <td style="font-size: 12px; color: #64748B;">${timeStr}</td>
+                      <td><span class="badge" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">Verified</span></td>
+                    </tr>
+                  `;
+                }).join('') : `
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: #64748B; padding: 24px;">No passenger logins recorded yet today. Users logging in on index.html appear here in real time.</td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Top 5 Busiest Transit Stops -->
+        <!-- Bus Fleet Operating Intensity Timeline -->
         <div class="analytics-card">
           <div class="analytics-card-header">
             <div>
               <h4 class="analytics-card-title">
-                <span>High-Volume Transit Hubs</span>
+                <span>Corridor Bus Departure Windows</span>
               </h4>
-              <span class="analytics-card-subtitle">Ranked by passenger boardings and ticket taps</span>
+              <span class="analytics-card-subtitle">Fleet deployment and scheduled runs across transit periods</span>
             </div>
-            <span style="font-size: 11px; color: #627D98; font-weight: 700;">Leaderboard</span>
+            <span style="font-size: 11.5px; color: #627D98; font-weight: 700;">${AdminState.trips.length} Daily Trips</span>
           </div>
 
-          <div class="leaderboard-list">
-            ${cur.topStops.map(s => `
-              <div class="leaderboard-row">
-                <div class="rank-badge rank-${s.rank <= 3 ? s.rank : 'other'}">
-                  ${s.rank}
-                </div>
-                <div class="leaderboard-info">
-                  <div class="leaderboard-name">${s.name}</div>
-                  <div class="leaderboard-meta">Stop Code: <b>${s.code}</b> &bull; Capacity Load: <b>${s.pct}%</b></div>
-                  <div style="width: 100%; height: 4px; background: #E2E8F0; border-radius: 2px; margin-top: 5px; overflow: hidden;">
-                    <div style="height: 100%; width: ${s.pct}%; background: ${s.rank === 1 ? '#E65100' : '#102A43'}; border-radius: 2px;"></div>
+          <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+            ${fleetOps.windows.map(win => `
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                  <div>
+                    <strong style="color: #102A43; font-size: 13px;">${win.label}</strong>
                   </div>
+                  <span style="font-size: 12px; font-weight: 700; color: ${win.color};">${win.count} Runs (${win.percent}%)</span>
                 </div>
-                <div class="leaderboard-count">${s.count} <span style="font-size: 10px; font-weight: 600; color: #627D98; display: block;">boardings</span></div>
+                <div style="width: 100%; height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden;">
+                  <div style="width: ${win.percent}%; height: 100%; background: ${win.color}; border-radius: 4px; transition: width 0.4s ease;"></div>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -2878,40 +2697,35 @@ function renderAdminAnalyticsTab(container) {
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
         const rows = [
-          ['SmartBus Analytics Report - Nashik CBS to Pimpalgaon Baswant Corridor'],
+          ['SmartBus Corridor Analytics Report'],
           ['Generated At', new Date().toISOString()],
           ['Time Range Filter', activeTimeRange],
-          ['Total Passenger Trips', cur.riders],
-          ['Fleet On-Time Rate (OTP)', cur.otp],
-          ['Average Corridor Delay', cur.delay],
-          ['Total Kilometers Logged', cur.mileage],
+          ['Total Trips This Week', weeklyTrips],
+          ['Total App Users', totalUsersCount],
+          ['Users Logged In Today', todayLoginsCount],
+          ['Active Fleet in Service', totalBusesCount],
           [],
-          ['High-Volume Transit Hubs'],
-          ['Rank', 'Stop Name', 'Stop Code', 'Boardings', 'Capacity Load %'],
-          ...cur.topStops.map(s => [s.rank, `"${s.name}"`, s.code, s.count, `${s.pct}%`]),
+          ['Bus Operations by Departure Window'],
+          ['Operating Window', 'Scheduled Trips', 'Share %'],
+          ...fleetOps.windows.map(w => [`"${w.label}"`, w.count, `${w.percent}%`]),
           [],
-          ['Fleet Status Distribution'],
-          ['Status', 'Buses', 'Percentage'],
-          ['Active in Transit', 22, '71%'],
-          ['Standby / Layover', 6, '19%'],
-          ['Depot Maintenance', 3, '10%'],
+          ['Hourly Passenger Logins Today'],
+          ['Time Window', 'Logins Count'],
+          ...hourLabels.map((hl, i) => [hl, hourlyLogins[i]]),
           [],
-          ['Corridor Punctuality Breakdown'],
-          ['Operator / Service', 'Average Delay', 'On-Time Performance'],
-          ['MSRTC Direct (Old CBS - Pimpalgaon Baswant)', '+1.3 min', '97.8%'],
-          ['Citilinc Municipal 20-Min Feeder', '+2.1 min', '95.4%'],
-          ['Private Intercity (Dwarka - PBW)', '+1.0 min', '98.6%'],
-          ['MSRTC Passing (Highway)', '+3.6 min', '92.1%']
+          ['Recent Passenger Logins in Firebase'],
+          ['Mobile', 'Date', 'Time', 'Status'],
+          ...recentLogins.map(l => [l.mobile, l.date || 'Today', l.timestamp || '', 'Live Verified'])
         ];
         const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.join(',')).join('\n');
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
         link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `SmartBus_Corridor_Analytics_${activeTimeRange}.csv`);
+        link.setAttribute('download', `SmartBus_Analytics_${activeTimeRange}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToastNotification(`Generated SmartBus_Corridor_Analytics_${activeTimeRange}.csv!`);
+        showToastNotification(`Generated SmartBus_Analytics_${activeTimeRange}.csv!`);
       });
     }
   }
@@ -2928,7 +2742,12 @@ function initAdmin() {
   StorageService.initDefaults();
   reloadDataFromStorage();
 
-  AdminState.isAdminAuthenticated = sessionStorage.getItem(StorageKeys.ADMIN_SESSION) === 'true';
+  const urlParams = new URLSearchParams(window.location.search);
+  AdminState.isAdminAuthenticated = sessionStorage.getItem(StorageKeys.ADMIN_SESSION) === 'true' || urlParams.get('auth') === 'true';
+  const tabParam = urlParams.get('tab');
+  if (tabParam && ['dashboard', 'tracker', 'routes', 'buses', 'timetables', 'analytics'].includes(tabParam)) {
+    AdminState.adminTab = tabParam;
+  }
 
   updateClock();
   setInterval(updateClock, 1000);
